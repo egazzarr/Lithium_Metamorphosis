@@ -1,0 +1,39 @@
+@font-face {
+  font-family: 'Apple Garamond';
+  src: url('../fonts/apple_garamond/AppleGaramond-Regular.woff2') format('woff2'),
+       url('../fonts/apple_garamond/AppleGaramond-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg: #000;
+  --fg: #f2f2f2;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Apple Garamond', serif;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.fade-in-title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(1.5rem, 5vw, 3rem);
+  letter-spacing: 0.05em;
+  opacity: 0;
+  animation: fadeIn 3s ease-in forwards;
+  animation-delay: 0.5s;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
