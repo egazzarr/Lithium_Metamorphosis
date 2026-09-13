@@ -5,7 +5,7 @@ What is lithium? Why does everybody talk about it? What does it represent?
 <table>
 <tr>
 <td width="30%" valign="middle">
-  <img src="images/intro/litio_hands.jpg" width="100%">
+  <img src="assets/images/intro/litio_hands.jpg" width="100%">
 </td>
 <td width="70%" valign="middle">
 
