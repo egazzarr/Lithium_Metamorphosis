@@ -1,12 +1,12 @@
 @font-face {
-  font-family: 'Apple Garamond';
-  src: url('../fonts/lato/Lato-Thin.woff2') format('woff2');
+  font-family: 'Lato';
+  src: url('../fonts/lato/Lato-Thin.ttf') format('ttf');
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  --bg: #000;
+  --bg: #222222;
   --fg: #f2f2f2;
 }
 
@@ -15,23 +15,50 @@
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: 'Apple Garamond', serif;
+  font-family: 'Lato', serif;
   height: 100vh;
   overflow: hidden;
 }
 
 .fade-in-title {
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: clamp(1.5rem, 5vw, 3rem);
   letter-spacing: 0.05em;
   opacity: 0;
-  animation: fadeIn 3s ease-in forwards;
-  animation-delay: 0.5s;
+  transition: opacity 2s ease-in;
+}
+
+.fade-in-title.visible {
+  opacity: 1;
 }
 
 @keyframes fadeIn {
   to { opacity: 1; }
 }
+
+.nav-btn {
+  position: fixed;
+  top: 28px;
+  background: none;
+  border: none;
+  color: var(--fg);
+  font-family: 'Lato', sans-serif;
+  font-weight: 250;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  cursor: pointer;
+  z-index: 100;
+  transition: opacity 0.3s ease;
+}
+
+.nav-btn:hover {
+  opacity: 1;
+}
+
+#back-btn { left: 28px; }
+#next-btn { right: 28px; }
