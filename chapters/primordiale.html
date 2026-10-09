@@ -2,15 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lithium Metamorphosis — Primordiale</title>
   <link rel="stylesheet" href="../assets/css/global.css">
   <link rel="stylesheet" href="primordiale.css">
-  
-</head>
-<body>
-  <img src="../assets/images/primordiale2.PNG" alt="" id="opening-image">
-  <h1 class="fade-in-title glow" id="chapter-title">Lithium Metamorphosis</h1>
 
+</head>
+<body data-no-next>
+  <div id="backdrop"></div>
+
+  <svg id="chapter-title" aria-label="Lithium Metamorphosis">
+    <defs>
+      <!-- everything except the inside of the letters -->
+      <mask id="outside-letters" maskUnits="userSpaceOnUse">
+        <rect x="0" y="0" width="100%" height="100%" fill="#fff"/>
+        <g class="title-group title-mask">
+          <text lengthAdjust="spacingAndGlyphs">LITHIUM</text>
+          <text lengthAdjust="spacingAndGlyphs">METAMORPHOSIS</text>
+        </g>
+      </mask>
+      <filter id="title-blur" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+        <feGaussianBlur stdDeviation="4"/>
+      </filter>
+    </defs>
+
+    <!-- soft glow, kept only on the outer side of the outline -->
+    <g mask="url(#outside-letters)">
+      <g filter="url(#title-blur)">
+        <g class="title-group title-glow">
+          <text lengthAdjust="spacingAndGlyphs">LITHIUM</text>
+          <text lengthAdjust="spacingAndGlyphs">METAMORPHOSIS</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- the crisp outline itself -->
+    <g class="title-group title-line">
+      <text lengthAdjust="spacingAndGlyphs">LITHIUM</text>
+      <text lengthAdjust="spacingAndGlyphs">METAMORPHOSIS</text>
+    </g>
+  </svg>
+
+  <p id="caption"></p>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.1/p5.min.js"></script>
   <script src="../assets/js/chapters-config.js"></script>
   <script src="../assets/js/global.js"></script>
   <script src="primordiale.js"></script>

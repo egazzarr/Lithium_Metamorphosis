@@ -1,21 +1,127 @@
-#opening-image {
-  position: absolute;
-  top: 70%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 60vw;
-  max-height: 60vh;
+/* Touch drives the scene on phones: no scrolling, zooming or text selection */
+html, body {
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  --depth: 0;
+  --shift: 0;
+  --bg: #0b0a09;
+}
+
+/* Rock photo filling the screen at any size, darkened at the start and
+   lifting a little as the camera rises. --depth (0 → 1) and --shift (px the
+   camera has risen) are set from primordiale.js. */
+#backdrop {
+  position: fixed;
+  /* taller than the screen so it can slide down as the camera rises */
+  top: -70vh;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(calc(var(--shift) * 0.5px));
+  z-index: -1;
+  pointer-events: none;
+  background:
+    /* faint light filtering down from above, stronger the higher we are */
+    linear-gradient(to bottom,
+      rgba(150, 128, 100, calc(var(--depth) * 0.25)) 0%,
+      rgba(150, 128, 100, 0) 70%),
+    /* darkness that thins out with depth */
+    linear-gradient(rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45)),
+                    rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45))),
+    url('../assets/images/background.jpeg') center / cover no-repeat;
+}
+
+/* Fine grain on top of the photo */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@font-face {
+  font-family: 'Lato Thin';
+  src: url('../assets/fonts/lato/Lato-Thin.ttf') format('truetype');
+}
+
+/* sharp-cornered title face (no rounded points on the M) */
+@font-face {
+  font-family: 'Anton Title';
+  src: url('../assets/fonts/anton/Anton-Regular.ttf') format('truetype');
+}
+
+/* Full-screen title, outline only: thin sharp lines with a faint glow on the
+   outer side. Line positions/sizes are set in primordiale.js (on portrait
+   screens the whole title is turned sideways to fill the phone). */
+#chapter-title {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
   opacity: 0;
-  animation: imageFadeIn 2s ease-in forwards;
+  transition: opacity 2s ease-in-out;   /* keep in sync with TITLE_FADE */
 }
 
-@keyframes imageFadeIn {
-  to { opacity: 1; }
+#chapter-title {
+  z-index: 10;
 }
 
-.glow {
+#chapter-title.visible {
+  opacity: 1;
+}
+
+#chapter-title text {
+  font-family: 'Anton Title', sans-serif;
+  fill: none;
+  stroke-linejoin: miter;
+  stroke-miterlimit: 10;
+}
+
+#chapter-title .title-line text {
+  stroke: var(--fg);
+  stroke-width: 1.5px;
+}
+
+/* blurred in primordiale.html (#title-blur); stdDeviation there sets how far it spreads */
+#chapter-title .title-glow text {
+  stroke: rgba(255, 245, 225, 0.45);
+  stroke-width: 4px;
+}
+
+#chapter-title .title-mask text {
+  fill: #000;
+  stroke: none;
+}
+
+/* Small thin inner-voice lines at the top of the screen */
+#caption {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  top: calc(9vh + env(safe-area-inset-top, 0px));
+  z-index: 20;
+  text-align: center;
+  font-family: 'Lato Thin', 'Lato', sans-serif;
+  font-size: clamp(0.85rem, 1.4vw, 1.1rem);
+  letter-spacing: 0.25em;
+  color: var(--fg);
   text-shadow:
-    0 0 20px rgba(255, 255, 255, 0.8),
-    0 0 45px rgba(255, 255, 255, 0.5),
-    0 0 90px rgba(255, 255, 255, 0.3);
+    0 0 8px rgba(255, 245, 225, 0.55),
+    0 0 22px rgba(255, 245, 225, 0.25);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+#caption.visible {
+  opacity: 0.85;
 }

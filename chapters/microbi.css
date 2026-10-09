@@ -6,4 +6,6 @@
   height: 100vh;
   object-fit: cover;
   background: #000;
+  opacity: 0;
+  animation: fadeIn 2s ease-in forwards;
 }

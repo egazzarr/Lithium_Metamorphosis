@@ -1,0 +1,31 @@
+@font-face {
+  font-family: 'Lato Thin';
+  src: url('../assets/fonts/lato/Lato-Thin.ttf') format('truetype');
+}
+
+/* The question, always readable on top of the spreading news */
+#question {
+  position: fixed;
+  top: 50%;
+  left: 16px;
+  right: 16px;
+  transform: translateY(-50%);
+  z-index: 20;
+  text-align: center;
+  font-family: 'Lato Thin', 'Lato', sans-serif;
+  font-size: clamp(1.2rem, 3.2vw, 2.4rem);
+  letter-spacing: 0.12em;
+  color: var(--fg);
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.9),
+    0 0 18px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(0, 0, 0, 0.6),
+    0 0 10px rgba(255, 245, 225, 0.4);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2s ease-in-out;
+}
+
+#question.visible {
+  opacity: 1;
+}
