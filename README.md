@@ -1,4 +1,4 @@
-# Lithium Metamorphosis
+# Lithium Metamorphosis 
 
 What is lithium? Why does everybody talk about it? What does it represent?
 
