@@ -1,9 +1,12 @@
 @font-face {
-  font-family: 'Lato Thin';
-  src: url('../assets/fonts/lato/Lato-Thin.ttf') format('truetype');
+  font-family: 'Lato Light';
+  src: url('../assets/fonts/lato/Lato-Light.ttf') format('truetype');
 }
 
-/* The question, always readable on top of the spreading news */
+/* The background is the dark rock photo of .static-chapter (global.css) */
+
+/* The question, always readable on top of the spreading news, until they
+   cover the whole screen */
 #question {
   position: fixed;
   top: 50%;
@@ -12,8 +15,8 @@
   transform: translateY(-50%);
   z-index: 20;
   text-align: center;
-  font-family: 'Lato Thin', 'Lato', sans-serif;
-  font-size: clamp(1.2rem, 3.2vw, 2.4rem);
+  font-family: 'Lato Light', 'Lato', sans-serif;
+  font-size: clamp(1.05rem, 2.6vw, 1.9rem);
   letter-spacing: 0.12em;
   color: var(--fg);
   text-shadow:
@@ -28,4 +31,73 @@
 
 #question.visible {
   opacity: 1;
+}
+
+/* ----- the lithium salt timelapse (timelapse.js), under the news ----- */
+
+#timelapse {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  color: #f1f1ef;
+  font-family: 'Lato Light', Lato, sans-serif;
+  opacity: 0;
+  visibility: hidden;
+}
+
+#timelapse.shown {
+  opacity: 1;
+  visibility: visible;
+}
+
+#timelapse canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  outline: none;
+}
+
+#timelapse .prompt {
+  position: fixed;
+  left: max(24px, 6vw);
+  bottom: max(28px, 5vh);
+  font-size: 14px;
+  letter-spacing: .18em;
+  pointer-events: none;
+  transition: opacity .35s;
+}
+
+#timelapse .prompt.hidden { opacity: 0; }
+
+#timelapse .source {
+  position: fixed;
+  right: max(20px, 5vw);
+  bottom: max(20px, 4vh);
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 70vw;
+  font-size: 12px;
+  letter-spacing: .025em;
+}
+
+#timelapse .source a { color: #bcbcb8; text-decoration: underline; text-underline-offset: 3px; }
+#timelapse .source a:hover, #timelapse .source a:focus-visible { color: #fff; }
+
+#timelapse .screen-reader {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 800px) {
+  #timelapse .source { bottom: 10px; right: 14px; max-width: 80vw; gap: 4px 12px; font-size: 11px; }
+  #timelapse .prompt { left: 20px; bottom: 52px; font-size: 12px; }
 }

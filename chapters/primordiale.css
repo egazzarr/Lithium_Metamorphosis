@@ -10,40 +10,62 @@ html, body {
 body {
   --depth: 0;
   --shift: 0;
+  --warm: 0;
+  --emerge: 0;
   --bg: #0b0a09;
 }
 
 /* Rock photo filling the screen at any size, darkened at the start and
    lifting a little as the camera rises. --depth (0 → 1) and --shift (px the
-   camera has risen) are set from primordiale.js. */
+   camera has risen) are set from primordiale.js, and so is --warm (0 → 1):
+   among the microbes the light grows and turns from grey-black to brown-orange.
+   At the top we come up out of the ground: the flamingo chapter's first frame
+   (#above, transparent below its mountains) comes down over the rock. */
 #backdrop {
   position: fixed;
-  /* taller than the screen so it can slide down as the camera rises */
-  top: -70vh;
+  /* taller than the screen so it can slide down as the camera rises
+     (fauna.css #ground repeats this box exactly) */
+  top: -86vh;
   bottom: 0;
   left: 0;
   right: 0;
   transform: translateY(calc(var(--shift) * 0.5px));
-  z-index: -1;
+  z-index: -2;
   pointer-events: none;
+  filter: brightness(calc(1 + var(--warm) * 0.45));
   background:
+    /* warm brown-orange light */
+    linear-gradient(rgba(150, 84, 42, calc(var(--warm) * 0.7)),
+                    rgba(150, 84, 42, calc(var(--warm) * 0.7))),
     /* faint light filtering down from above, stronger the higher we are */
     linear-gradient(to bottom,
       rgba(150, 128, 100, calc(var(--depth) * 0.25)) 0%,
       rgba(150, 128, 100, 0) 70%),
     /* darkness that thins out with depth */
-    linear-gradient(rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45)),
-                    rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45))),
+    linear-gradient(rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45 - var(--warm) * 0.2)),
+                    rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45 - var(--warm) * 0.2))),
     url('../assets/images/background.jpeg') center / cover no-repeat;
 }
 
-/* Fine grain on top of the photo */
+#above {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: transparent;
+  transform: translateY(-100%);
+}
+
+/* Fine grain on top of the photo, gone once we are above the ground */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.12;
+  opacity: calc(0.12 * (1 - var(--emerge)));
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -52,54 +74,55 @@ body::before {
   src: url('../assets/fonts/lato/Lato-Thin.ttf') format('truetype');
 }
 
-/* sharp-cornered title face (no rounded points on the M) */
 @font-face {
-  font-family: 'Anton Title';
-  src: url('../assets/fonts/anton/Anton-Regular.ttf') format('truetype');
+  font-family: 'Lato Black';
+  src: url('../assets/fonts/lato/Lato-Black.ttf') format('truetype');
 }
 
-/* Full-screen title, outline only: thin sharp lines with a faint glow on the
-   outer side. Line positions/sizes are set in primordiale.js (on portrait
-   screens the whole title is turned sideways to fill the phone). */
+/* The hand-drawn title stands in the dark above the bowl. It is part of the
+   place: the camera rises to it, it blurs in quickly as the camera stops, and
+   blurs out the same way as the camera rises on. --title-shift (px) is how far
+   the camera has risen beyond the point where the title is centred on the
+   screen. */
 #chapter-title {
   position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 2s ease-in-out;   /* keep in sync with TITLE_FADE */
-}
-
-#chapter-title {
   z-index: 10;
+  transform: translateY(calc(var(--title-shift, 0) * 1px));
+  animation: title-glow 3.2s ease-in-out infinite;   /* a soft light around it, breathing */
 }
 
-#chapter-title.visible {
+#chapter-title img {
+  width: min(40vw, 50vh);
+  height: auto;
+  opacity: 0;
+  filter: blur(4px);
+  transition: opacity 0.9s ease-out, filter 0.9s ease-out;
+}
+
+#chapter-title.shown img {
   opacity: 1;
+  filter: blur(0);
 }
 
-#chapter-title text {
-  font-family: 'Anton Title', sans-serif;
-  fill: none;
-  stroke-linejoin: miter;
-  stroke-miterlimit: 10;
+/* Opened from the menu or the buttons, a page fades in. Continuing from the
+   previous chapter (?from=…) it doesn't: it starts on that chapter's last frame. */
+body:not(.seamless) {
+  animation: chapter-in 1.5s ease-out backwards;   /* not "both": once done it must let the fade-out on leaving work */
 }
 
-#chapter-title .title-line text {
-  stroke: var(--fg);
-  stroke-width: 1.5px;
+@keyframes chapter-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* blurred in primordiale.html (#title-blur); stdDeviation there sets how far it spreads */
-#chapter-title .title-glow text {
-  stroke: rgba(255, 245, 225, 0.45);
-  stroke-width: 4px;
-}
-
-#chapter-title .title-mask text {
-  fill: #000;
-  stroke: none;
+@keyframes title-glow {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 240, 215, 0.35)); }
+  50% { filter: drop-shadow(0 0 22px rgba(255, 240, 215, 0.8)); }
 }
 
 /* Small thin inner-voice lines at the top of the screen */
@@ -125,3 +148,6 @@ body::before {
 #caption.visible {
   opacity: 0.85;
 }
+
+/* a microbe under the pointer can be read */
+body.over-microbe { cursor: pointer; }

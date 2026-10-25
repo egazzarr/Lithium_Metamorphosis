@@ -1,0 +1,71 @@
+@font-face {
+  font-family: 'Lato Thin';
+  src: url('../assets/fonts/lato/Lato-Thin.ttf') format('truetype');
+}
+
+/* The relief photo fills the screen; the map loops in the middle and turns to
+   its negative while the pointer is over it. */
+body {
+  --bg: #2a1a4a;
+  background: var(--bg) url('../assets/images/oro_si.PNG') center / cover no-repeat;
+}
+
+/* Opened from the menu or the buttons, the page fades in. Arriving from the
+   fauna chapter (?from=fauna) it doesn't: the relief has already faded in
+   there, and only the map and the place appear on it. */
+body:not(.seamless) {
+  animation: chapter-in 1.5s ease-out backwards;   /* not "both": once done it must let the fade-out on leaving work */
+}
+
+body.seamless #oro-map,
+body.seamless #place {
+  animation: chapter-in 1.5s ease-out backwards;
+}
+
+@keyframes chapter-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+#oro-map {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(56vw, 66vh);
+  height: auto;
+  transform: translate(-50%, -50%);
+  transition: filter 0.4s ease;
+}
+
+#oro-map:hover {
+  filter: invert(1);
+}
+
+/* the place turns black with the map's negative (the text lets the pointer
+   through, so the map stays hovered under it) */
+#oro-map:hover ~ #place {
+  color: #000;
+  text-shadow: none;
+}
+
+/* The place, in the thin glowing hand of the inner voice and the microbe names,
+   on the map, in the middle */
+#place {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  text-align: center;
+  font-family: 'Lato Thin', 'Lato', sans-serif;
+  font-size: clamp(0.85rem, 1.4vw, 1.1rem);
+  letter-spacing: 0.25em;
+  color: var(--fg);
+  text-shadow:
+    0 0 8px rgba(255, 245, 225, 0.55),
+    0 0 22px rgba(255, 245, 225, 0.25);
+  opacity: 0.9;
+  pointer-events: none;
+  transition: color 0.4s ease, text-shadow 0.4s ease;   /* along with the map's negative */
+}

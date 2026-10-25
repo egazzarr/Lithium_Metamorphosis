@@ -106,6 +106,8 @@ body.fade-out {
   opacity: 1;
 }
 
+.menu-open #menu-btn { --fg: #f2f2f2; }
+
 #menu-btn span {
   display: block;
   height: 1px;
@@ -119,6 +121,7 @@ body.fade-out {
 .menu-open #menu-btn span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
 
 #chapter-menu {
+  --fg: #f2f2f2;             /* the menu is always dark, whatever the chapter's colours */
   position: fixed;
   inset: 0;
   z-index: 250;

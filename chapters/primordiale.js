@@ -1,46 +1,74 @@
+// primordiale.html starts at the bowl; once the title has gone it carries on
+// into the microbes without a break, and from there on counts as the microbi
+// chapter (address, buttons and menu switch over). microbi.html, opened from
+// the menu or the buttons, starts at that point.
+const START = document.body.dataset.start || 'bowl';
+if (new URLSearchParams(location.search).has('from')) document.body.classList.add('seamless');
+
 document.addEventListener('DOMContentLoaded', () => {
-  layoutTitle();
-  window.addEventListener('resize', layoutTitle);
-  document.fonts.load(`10px ${TITLE_FONT}`);   // the canvas letter mask needs it ready
+  document.fonts.load(`10px ${LABEL_FONT}`);   // the microbe labels are drawn on the canvas
   trackPointer();
 
-  createChapterSketch(dustSketch);    // background: floating dust
-  createChapterSketch(pileSketch);    // on top: the rock pile, then the title scene
+  createChapterSketch(sceneSketch);   // on top: the bowl of rocks, then the microbes
 
-  setTimeout(() => playCaption(0), CAPTION_START * 1000);
+  if (START === 'bowl') setTimeout(() => playCaption(0), CAPTION_START * 1000);
 });
 
 /*
-  pile   – one rock rests at the bottom centre; while the pointer is over the
-           stones (or a finger touches them) rocks keep falling where it is and
-           slide down into a cone at the bottom, while the captions play
-  camera – CAMERA_DELAY seconds after the last caption has gone, the camera
-           rises and the pile slides out of view
-  title  – the title appears as a thick glowing outline, with two microbes
-           creeping through the inside of the letters after the pointer;
-           then we move on to the microbi chapter
+  bowl     – small fragments fall like grains from the top of the screen into
+             an invisible bowl at the bottom, bounce a little where they hit
+             its sides and run down them, filling it level instead of piling
+             up. Only a few fall while the pointer is elsewhere; with the
+             pointer over the bowl many more pour in around it
+  rise     – once the last caption has gone, the camera rises and eases to a
+             stop just as the last rocks have gone below the screen
+  title    – there the title blurs in at once, in the middle of the screen,
+             stays TITLE_HOLD seconds and blurs out the way it came
+  beyond   – the camera rises on, gathering speed, and the first microbes
+             come into view. Once the title is behind, primordiale.html hands
+             over to microbi.html, which starts with the microbes
+  microbes – the camera keeps rising through MICROBE_SCREENS screens of
+             microbes, very scarce at first and crowded only at the end, while the light warms
+             from grey-black to brown-orange; hovering one stops the camera,
+             makes it glow and draws a line to its name, so the more they are
+             explored the longer it lasts
+  emerge   – at the top we come up out of the ground: the mountains of the
+             flamingo chapter come down from above, their powdery lower edges
+             resting on the rock, and once they are in place that chapter takes over
 */
 
-const ROCK_FILES = ['rock1.png', 'rock2.png', 'rock3.png', 'rock4.PNG'];
-const ROCK_SIZE = [40, 100];     // visual size range (square root of visible area), in px on desktop
-const FIRST_ROCK_SIZE = 120;
-const FIRST_ROCK_FILE = 'rock4.PNG';
+const ROCK_FILES = ['rock1.png', 'rock2.png', 'rock3.png', 'rock4.png', 'rock5.png'];
+const ROCK_SIZE = [8, 22];      // tiny fragments, sized by square root of visible area
+const FIRST_ROCK_SIZE = 24;
+const FIRST_ROCK_FILE = 'rock1.png';
 const FIRST_GLOW_PERIOD = 4.5;   // seconds per slow pulse of the first rock's glow, inviting a hover
-const ROCK_TEXTURE_MAX = 260;    // rocks are downscaled to this for drawing
+const ROCK_TEXTURE_MAX = 90;     // rocks are downscaled to this for drawing
 
-// Pile building: while the pointer is over the stones, rocks fall where it is
-// and slide down until the slope is gentle enough, building a wide cone
-const DROP_EVERY = 0.22;         // seconds between rocks
-const DROP_JITTER = 18;          // px; how far from the pointer a rock may fall
-const MAX_PILE = 280;            // safety cap; rocks that roll off the screen are removed
-const SCATTER = 0.1;             // share of rocks that bounce off towards the sides
-const REPOSE_ANGLE = [22, 34];   // degrees; per-rock steepest slope it can stop on (the cone's steepness)
+// The bowl: an invisible curve at the bottom centre that the grains fall into
+const BOWL_WIDTH = 0.3;          // half-width, as a share of the screen width (capped by the height)
+const BOWL_WIDTH_PORTRAIT = 0.44;   // the same on tall screens such as phones
+const BOWL_DEPTH = 0.45;         // depth, as a share of the half-width
+const BOWL_BOTTOM = 0.93;        // where its lowest point sits, as a share of the screen height
+const OFFSCREEN = 60;            // px of ground mapped beyond the screen edges
+const SPAWN_RATE = [0.5, 2.5];   // grains per second with the pointer away: a few, slowly more
+const SPAWN_RAMP = [4, 30];      // seconds over which that rate grows
+const HOVER_RATE = 30;           // grains per second with the pointer over the bowl
+const FALL_GRAVITY = 0.45;       // px per frame²
+const FALL_MAX = 14;             // px per frame
+const BOUNCE = [0.15, 0.35];     // share of the speed kept in the one small hop off the bowl
+const BOUNCE_MIN = 3;            // px per frame; slower landings don't hop
+const SLIDE_KICK = 0.45;         // how much of the fall turns into running down the slope on landing
+const BOWL_FULL = 0.95;          // stop adding grains once it is this full
+const MAX_ROCKS = 1400;
+const ROLL_PULL = 0.14;          // how strongly the slope accelerates a grain
+const ROLL_FRICTION = 0.97;
+const ROLL_MAX = 5;              // px per frame
+const REPOSE_ANGLE = [3, 9];     // degrees; low, so the bowl fills level instead of making a pile
+const SINK = 0.35;               // how much rocks overlap the ones below
 
 // Rocks lean gently towards the pointer
 const PILE_MAGNET = 22;          // px a rock right next to the pointer is pulled out of place
 const PILE_MAGNET_RANGE = 160;   // px; the pull fades out beyond this
-const FALL_MAGNET = 0.01;        // how much falling rocks drift towards the pointer
-const SINK = 0.35;               // how much rocks overlap the ones below
 
 // Inner-voice captions at the top
 const CAPTIONS = ['Where am I?', 'It is so dark here ...'];
@@ -48,28 +76,57 @@ const CAPTION_START = 5;
 const CAPTION_FADE = 1.5, CAPTION_HOLD = 4, CAPTION_GAP = 4;   // fade matches the CSS
 
 // Camera
-const CAMERA_DELAY = 4;          // seconds after the last caption has faded out
-const CAMERA_MOVE = 4;           // seconds the camera takes to rise past the pile
-const TITLE_DURING_CAMERA = 0.7; // the title starts when the camera is this far through its move
+const CAMERA_DELAY = 1;          // seconds after the last caption has faded out
+const CAMERA_START = 3;          // seconds the camera takes to reach its full speed after the title
+const CAMERA_RISE = 1.3;         // screen heights above the bowl where the title stands, until the rise has measured it
+const RISE_TIME = 5;             // seconds the camera takes to rise until the rocks are gone, easing in and out
+const RISE_MARGIN = 12;          // px the highest rock is below the screen when the camera stops
 
-// Title scene
-const TITLE_FADE = 2;            // keep in sync with #chapter-title in the CSS
-const TITLE_HOLD = 10;
+// Title
+const TITLE_HOLD = 5;            // seconds it stays, from blurring in to starting to blur out (primordiale.css)
+const TITLE_OUT = 0.6;           // screen heights the camera rises past it before the microbi chapter starts
 
-// Microbes creeping into the letters
-const MICROBE_FILES = ['microbo1.png', 'microbo2.png'];
-const MICROBE_SIZE = 0.32;       // size relative to the shorter side of the screen
-const MICROBE_TRAVEL = 16;       // seconds a full crossing takes
+// Microbes
+const MICROBE_FILES = [   // named microbo_NAME.png; NAME is shown on hover
+  'microbo_Artemia franciscana.png',
+  'microbo_Artemia persimilis.png',
+  'microbo_Boeckella poopoensis.png',
+  'microbo_Cyanothece spp..png',
+  'microbo_Cyprideis.png',
+  'microbo_Dunaliella salina.png',
+  'microbo_Haloroundia speciosa.png',
+  'microbo_Microcoleus chthonoplastes.png',
+  'microbo_Pleuroxus hardingi.png',
+  'microbo_Synechococcus spp..png',
+];
+const MICROBE_PACE = 8;          // seconds per screen height while the camera rises through them
+const MICROBE_SCREENS = 3;       // screen heights of microbes above the title: about 24 s untouched
+const MICROBE_PER_KIND = 3;      // at most this many of each kind in all
+const MICROBE_TRIES = 80;        // places tried for each before it is left out, so none overlap
+const MICROBE_CROWDING = 3.5;    // > 1: scarce near the title, denser and denser further up
+const MICROBE_SIZE = [110, 300]; // px, by square root of visible area (smaller on phones)
+const MICROBE_STRETCH = [0.75, 1.3];   // each one is stretched a little differently in width and height
+const MICROBE_TEXTURE_MAX = 560;
+const MICROBE_DRIFT = 90;        // px a wandering microbe strays from its spot
+const LABEL_FONT = "'Lato Thin', sans-serif";
+const MICROBES_PAGE = 'microbi.html';
+const NEXT_SCENE = 'fauna.html?from=microbi';
+const NEXT_SCENE_FRAME = 'fauna.html?embed';   // its first frame, shown above the ground
+const EMERGE_SPEED = 1.6;        // × the microbe pace while we come up out of the ground (fauna.js RISE matches it)
+const MICROBES_EARLY = 0.2;      // screen heights before microbi's start where the first microbes already are: just out of view above the title
 
-const TITLE_FONT = "'Anton Title', sans-serif";
-let titleLayout = null;
+// The page colour behind everything, from the dark to the warm brown-orange
+// the flamingo scene starts from (fauna.css)
+const BG_DARK = [11, 10, 9], BG_WARM = [138, 85, 48];
+
 let captionsEndedAt = null;
 
 // Shared between the two sketches: how far the camera has risen, in px
 const world = { shift: 0 };
 
 // Mouse or finger. A finger only counts while it touches the screen.
-const pointer = { x: 0, y: 0, active: false };
+const pointer = { x: 0, y: 0, active: false, tapUntil: 0 };
+const TAP_HOLD = 4;              // seconds a tapped microbe stays selected
 
 function trackPointer() {
   const update = (e) => {
@@ -79,7 +136,13 @@ function trackPointer() {
     pointer.y = e.clientY;
     pointer.active = true;
   };
-  const release = (e) => { if (e.pointerType !== 'mouse') pointer.active = false; };
+  // a lifted finger still counts where it last tapped for a few seconds,
+  // so a tapped microbe keeps its name on screen
+  const release = (e) => {
+    if (e.pointerType === 'mouse') return;
+    pointer.active = false;
+    pointer.tapUntil = performance.now() + TAP_HOLD * 1000;
+  };
   window.addEventListener('pointermove', update);
   window.addEventListener('pointerdown', update);
   window.addEventListener('pointerup', release);
@@ -102,99 +165,35 @@ function playCaption(i) {
   }, (CAPTION_FADE + CAPTION_HOLD) * 1000);
 }
 
-// Fits the two title lines to fill the screen: each line spans the full width
-// and takes half the height, so the letters come out tall and stretched.
-// On portrait screens the title is laid out sideways along the long side.
-// The sketch uses the same layout to keep the microbes inside the letters.
-function layoutTitle() {
-  const w = window.innerWidth, h = window.innerHeight;
-  const rotate = h > w * 1.15;
-  const tw = rotate ? h : w, th = rotate ? w : h;
-  const capRatio = 0.86;                 // Anton cap height / font size
-  const pad = th * 0.04, gap = th * 0.04;
-  const capH = (th - 2 * pad - gap) / 2;
-  const baselines = [pad + capH, th - pad];
-
-  const lines = baselines.map((y, i) => ({
-    text: ['LITHIUM', 'METAMORPHOSIS'][i], x: tw * 0.02, y, length: tw * 0.96, fontSize: capH / capRatio,
-  }));
-
-  document.getElementById('chapter-title').setAttribute('viewBox', `0 0 ${w} ${h}`);
-  for (const group of document.querySelectorAll('.title-group')) {
-    group.setAttribute('transform', rotate ? `translate(${w} 0) rotate(90)` : '');
-    group.querySelectorAll('text').forEach((el, i) => {
-      el.setAttribute('x', lines[i].x);
-      el.setAttribute('y', lines[i].y);
-      el.setAttribute('textLength', lines[i].length);
-      el.setAttribute('font-size', lines[i].fontSize);
-    });
-  }
-  titleLayout = { rotate, w, lines };
-}
-
-// Background layer: floating dust, sliding down at different speeds
-// (parallax) when the camera rises.
-function dustSketch(p) {
-  const dust = [];
-
-  p.setup = () => {
-    p.pixelDensity(1);
-    p.createCanvas(p.windowWidth, p.windowHeight);
-    const count = Math.round(170 * Math.min(1, (p.width * p.height) / 1.3e6) + 40);
-    for (let i = 0; i < count; i++) {
-      const z = p.random(0.15, 1);       // 1 = close to the camera, moves fastest
-      dust.push({
-        x: p.random(),
-        y: p.random(),
-        z,
-        r: p.random(0.6, 2.4) * z,
-        a: p.random(25, 100),
-        seed: p.random(1000),
-      });
-    }
-  };
-
-  p.draw = () => {
-    p.clear();
-    p.noStroke();
-    const span = p.height + 40;
-    const t = p.millis() / 1000;
-    for (const d of dust) {
-      // slow drift, plus the camera's rise
-      const y = ((d.y * span + t * 6 * d.z + world.shift * d.z) % span + span) % span - 20;
-      const x = d.x * p.width + (p.noise(d.seed, t * 0.12) - 0.5) * 40;
-      p.fill(210, 190, 160, d.a);
-      p.circle(x, y, d.r * 2);
-    }
-  };
-
-  p.windowResized = () => {
-    p.resizeCanvas(p.windowWidth, p.windowHeight);
-  };
-}
-
-function pileSketch(p) {
-  const rockImages = [];
-  const microbeImages = [];
-  const textures = [];
-  let microbeTextures = [];
-  let pile = [];           // rocks resting on (or falling onto) the pile, in screen space before the camera shift
+// Everything here lives in world coordinates: on screen, y + world.shift.
+function sceneSketch(p) {
+  const rockImages = [], microbeImages = [];
+  const textures = [], microbeTextures = [];
+  let rocks = [];
   let microbes = [];
   let first;               // the rock that starts it all
   let firstGlow = 1;       // its inviting glow, fading once rocks start falling
   let hasDropped = false;
-  let surface;             // highest point of the pile per column
+  let surface;             // highest point of the fill per column
   const COL = 4;           // column width of the surface map, px
-  let groundY;
-  let lastDrop = 0;
-  let layer, letterLayer;  // offscreen: what goes inside the letters, and the letter mask
-  let phase = 'pile';
-  let cameraStart = 0, titleStart = 0;
-  let leaving = false;
+  let bowl;
+  let spawnDebt = 0;       // rocks owed to the spawn rate, carried between frames
+  let phase = 'bowl';
+  let startedAt = 0;
+  let riseTop = 0, microbesStart = 0, microbesTop = 0;   // camera shift at the title, where microbi starts, and at the last microbes
+  let cameraSpeed = 0;
+  let riseStartedAt = 0, titleAt = 0;   // when the camera set off from the bowl, and when it stopped at the title
+  let lastFrame = 0;
 
+  // A missing file is skipped instead of holding the whole scene on "Loading..."
   p.preload = () => {
-    for (const file of ROCK_FILES) rockImages.push(p.loadImage('../assets/images/' + file));
-    for (const file of MICROBE_FILES) microbeImages.push(p.loadImage('../assets/images/' + file));
+    ROCK_FILES.forEach((file, i) => {
+      rockImages[i] = p.loadImage('../assets/images/' + file, undefined, () => { rockImages[i] = null; });
+    });
+    if (START === 'microbes') MICROBE_FILES.forEach((file, i) => {   // primordiale never shows them
+      microbeImages[i] = p.loadImage('../assets/images/' + encodeURIComponent(file), undefined,
+        () => { microbeImages[i] = null; });
+    });
   };
 
   // Crops away the transparent border so every image is sized by its visible shape.
@@ -230,27 +229,33 @@ function pileSketch(p) {
     return x * x * (3 - 2 * x);
   }
 
-  // rocks are a bit smaller on phones
+  // things are a bit smaller on phones
   function sizeScale() {
     return p.constrain(Math.min(p.width, p.height) / 800, 0.55, 1);
   }
 
-  function makeLayers() {
-    if (layer) { layer.remove(); letterLayer.remove(); }
-    layer = p.createGraphics(p.width, p.height);
-    layer.imageMode(p.CENTER);
-    letterLayer = p.createGraphics(p.width, p.height);
+  // ----- the bowl -----
+  // The fill's outline is kept as a height per narrow column, starting as the
+  // bowl's curve. Rocks are treated as ellipses resting on that outline: they
+  // roll while the slope under them is steeper than they can rest on, and only
+  // when they stop do they raise the outline by their upper half.
+
+  function makeBowl() {
+    const R = Math.min(p.width * (p.width < p.height ? BOWL_WIDTH_PORTRAIT : BOWL_WIDTH), p.height * 0.55);
+    const bottom = p.height * BOWL_BOTTOM;
+    bowl = { cx: p.width / 2, R, bottom, rim: bottom - R * BOWL_DEPTH };
+    // the map reaches beyond both screen edges, where the rocks start
+    surface = new Float32Array(Math.ceil((p.width + 2 * OFFSCREEN) / COL) + 3);
+    for (let c = 0; c < surface.length; c++) surface[c] = bowlY(colX(c));
   }
 
-  // ----- the pile -----
-  // The pile's outline is kept as a height per narrow column. Rocks are treated
-  // as ellipses: a falling rock lands where its lower half touches the outline,
-  // tumbles downhill (or gets kicked sideways) until the slope is gentle enough
-  // for it, and only then raises the outline by its upper half.
+  // surface column ↔ x on screen
+  function colX(c) { return c * COL - OFFSCREEN - COL; }
+  function xCol(x) { return (x + OFFSCREEN + COL) / COL; }
 
-  function resetSurface() {
-    groundY = p.height * 0.985;
-    surface = new Float32Array(Math.ceil(p.width / COL) + 1).fill(groundY);
+  function bowlY(x) {
+    const d = Math.min(1, Math.abs(x - bowl.cx) / bowl.R);
+    return bowl.bottom - (bowl.bottom - bowl.rim) * d * d;
   }
 
   function halfProfile(r, dx) {
@@ -258,23 +263,36 @@ function pileSketch(p) {
     return f >= 1 ? 0 : (r.h / 2) * Math.sqrt(1 - f * f);
   }
 
-  // where the rock's centre would rest at x (beyond the screen edges it's bare ground)
+  // where the rock's centre would rest at x
   function restY(r, x) {
-    let y = groundY - (r.h / 2) * (1 - SINK);
-    const c0 = Math.max(0, Math.floor((x - r.w * 0.45) / COL));
-    const c1 = Math.min(surface.length - 1, Math.ceil((x + r.w * 0.45) / COL));
+    let y = bowlY(x) - (r.h / 2) * (1 - SINK);
+    const c0 = Math.max(0, Math.floor(xCol(x - r.w * 0.45)));
+    const c1 = Math.min(surface.length - 1, Math.ceil(xCol(x + r.w * 0.45)));
     for (let c = c0; c <= c1; c++) {
-      y = Math.min(y, surface[c] - halfProfile(r, Math.abs(c * COL - x)) * (1 - SINK));
+      y = Math.min(y, surface[c] - halfProfile(r, Math.abs(colX(c) - x)) * (1 - SINK));
     }
     return y;
   }
 
   function addToSurface(r) {
-    const c0 = Math.max(0, Math.floor((r.x - r.w * 0.45) / COL));
-    const c1 = Math.min(surface.length - 1, Math.ceil((r.x + r.w * 0.45) / COL));
+    const c0 = Math.max(0, Math.floor(xCol(r.x - r.w * 0.45)));
+    const c1 = Math.min(surface.length - 1, Math.ceil(xCol(r.x + r.w * 0.45)));
     for (let c = c0; c <= c1; c++) {
-      surface[c] = Math.min(surface[c], r.y - halfProfile(r, Math.abs(c * COL - r.x)));
+      surface[c] = Math.min(surface[c], r.y - halfProfile(r, Math.abs(colX(c) - r.x)));
     }
+  }
+
+  // how full the bowl is at its centre, 0 → 1
+  function fill() {
+    const top = surface[Math.round(xCol(bowl.cx))];
+    return (bowl.bottom - top) / (bowl.bottom - bowl.rim);
+  }
+
+  // is the pointer over the bowl (or the air just above it)?
+  function pointerInBowl() {
+    if (!pointer.active) return false;
+    const y = pointer.y - world.shift;
+    return Math.abs(pointer.x - bowl.cx) < bowl.R && y > bowl.rim - bowl.R * 0.4 && y < p.height;
   }
 
   function makeRock(size, tex = p.random(textures)) {
@@ -282,87 +300,78 @@ function pileSketch(p) {
     return { img: tex.img, w: tex.w * scale, h: tex.h * scale, angle: p.random(-p.PI, p.PI) };
   }
 
-  function dropRock() {
+  // A new grain falls from above the top of the screen into the bowl: anywhere
+  // over it, or around the pointer while that is over the bowl.
+  function spawnRock(nearPointer) {
     const r = makeRock(p.random(ROCK_SIZE[0], ROCK_SIZE[1]));
-    r.x = pointer.x + p.randomGaussian(0, DROP_JITTER);
-    r.y = -r.h - p.random(0, 80);
-    r.vy = p.random(0, 2);
-    // a few rocks bounce off outwards (away from the cone's middle), the rest just tumble a little
-    const outward = p.random() < 0.5 ? -1 : 1;
-    r.kick = p.random() < SCATTER ? outward * p.random(3, 6) : p.random(-0.6, 0.6);
     r.ox = 0;
     r.oy = 0;
-    r.spin = p.random(-0.06, 0.06);
     r.slope = Math.tan(p.radians(p.random(REPOSE_ANGLE[0], REPOSE_ANGLE[1])));
+    const x = nearPointer ? pointer.x + p.randomGaussian(0, bowl.R * 0.3) : bowl.cx + p.random(-1, 1) * bowl.R;
+    r.x = p.constrain(x, bowl.cx - bowl.R * 0.95, bowl.cx + bowl.R * 0.95);
+    r.y = -world.shift - p.random(20, 120);
+    r.vx = p.random(-0.3, 0.3);
+    r.vy = p.random(0, 3);
+    r.spin = p.random(-0.08, 0.08);
     r.bounced = false;
     r.state = 'falling';
-    pile.push(r);
+    rocks.push(r);
   }
 
-  // Is the pointer over the stones (anywhere on the pile, or just above it)?
-  function overStones() {
-    if (!pointer.active) return false;
-    const c = Math.round(pointer.x / COL);
-    if (c < 0 || c >= surface.length || surface[c] >= groundY) return false;
-    return pointer.y >= surface[c] + world.shift - 25;
+  // the slope of the ground under a grain: + going down to the right
+  function slopeAt(r) {
+    const e = Math.max(COL, r.w * 0.5);
+    return (restY(r, r.x + e) - restY(r, r.x - e)) / (2 * e);
   }
 
-  function updatePile() {
-    for (let i = pile.length - 1; i >= 0; i--) {
-      const r = pile[i];
+  function updateRocks() {
+    for (const r of rocks) {
       if (r.state === 'falling') {
-        r.vy += 0.6;
+        r.vy = Math.min(r.vy + FALL_GRAVITY, FALL_MAX);
         r.y += r.vy;
+        r.x = p.constrain(r.x + r.vx, bowl.cx - bowl.R, bowl.cx + bowl.R);
         r.angle += r.spin;
-        // drifts a little towards the pointer on the way down
-        if (pointer.active) {
-          const d = Math.hypot(pointer.x - r.x, pointer.y - (r.y + world.shift));
-          r.x += (pointer.x - r.x) * FALL_MAGNET * PILE_MAGNET_RANGE / (d + PILE_MAGNET_RANGE);
-        }
         const ground = restY(r, r.x);
         if (r.y >= ground) {
           r.y = ground;
-          if (!r.bounced && r.vy > 5) {
-            r.vy = -r.vy * 0.2;
-            r.bounced = true;
+          // part of the fall turns into running down the slope it hit
+          r.vx += slopeAt(r) * r.vy * SLIDE_KICK;
+          if (!r.bounced && r.vy > BOUNCE_MIN) {
+            r.bounced = true;   // one small hop, then it runs
+            r.vy = -r.vy * p.random(BOUNCE[0], BOUNCE[1]);
+            r.vx *= 0.8;
+            r.y -= 1;
           } else {
             r.state = 'rolling';
-            r.vx = r.kick;
           }
         }
-      } else if (r.state === 'rolling') {
-        // the kick carries it sideways first, then it slides down while the slope is too steep
-        let dx = 0;
-        if (Math.abs(r.vx) > 0.4) {
-          dx = r.vx;
-          r.vx *= 0.95;
-        } else {
-          // look half a rock-width to each side, so small dips between rocks
-          // don't stop it: it keeps sliding while the slope is steeper than its angle
-          const reach = r.w * 0.5;
-          const here = restY(r, r.x);
-          const yl = restY(r, r.x - reach), yr = restY(r, r.x + reach);
-          const [dir, lower] = yl > yr ? [-1, yl] : [1, yr];
-          if (lower - here > reach * r.slope) dx = dir * 3;
-        }
-        r.x += dx;
-        r.y += (restY(r, r.x) - r.y) * 0.5;
-        r.angle += dx / (r.w * 0.5);   // turning as it rolls
-
-        if (r.x < -r.w || r.x > p.width + r.w) { pile.splice(i, 1); continue; }   // rolled off the screen
-        if (dx === 0) {
-          r.y = restY(r, r.x);
-          r.state = 'rest';
-          addToSurface(r);
-        }
+        continue;
+      }
+      if (r.state !== 'rolling') continue;
+      // look half a rock-width to each side, so small dips between rocks don't
+      // stop it and it can't balance on top of another: it rolls towards the
+      // lower side while that side drops more steeply than it can rest on
+      const reach = Math.max(COL, r.w * 0.5);
+      const here = restY(r, r.x);
+      const dropL = restY(r, r.x - reach) - here, dropR = restY(r, r.x + reach) - here;
+      const [dir, drop] = dropL > dropR ? [-1, dropL] : [1, dropR];
+      const steep = drop > reach * r.slope;
+      if (steep) r.vx += dir * (drop / reach) * ROLL_PULL;
+      r.vx = p.constrain(r.vx * ROLL_FRICTION, -ROLL_MAX, ROLL_MAX);
+      r.x = p.constrain(r.x + r.vx, bowl.cx - bowl.R, bowl.cx + bowl.R);
+      r.y = restY(r, r.x);
+      r.angle += r.vx / (r.w * 0.5);   // turning as it rolls
+      if (!steep && Math.abs(r.vx) < 0.12) {
+        r.state = 'rest';
+        addToSurface(r);
       }
     }
   }
 
   // Every rock is drawn slightly pulled towards the pointer, easing in and out,
-  // without changing where it actually rests in the pile.
-  function drawPile() {
-    for (const r of pile) {
+  // without changing where it actually rests.
+  function drawRocks() {
+    for (const r of rocks) {
       const y = r.y + world.shift;
       let tx = 0, ty = 0;
       if (pointer.active) {
@@ -373,8 +382,8 @@ function pileSketch(p) {
         tx = dx * k;
         ty = dy * k;
       }
-      r.ox = (r.ox || 0) + (tx - (r.ox || 0)) * 0.06;
-      r.oy = (r.oy || 0) + (ty - (r.oy || 0)) * 0.06;
+      r.ox += (tx - r.ox) * 0.06;
+      r.oy += (ty - r.oy) * 0.06;
       if (y - r.h > p.height) continue;
       p.push();
       p.translate(r.x + r.ox, y + r.oy);
@@ -400,156 +409,340 @@ function pileSketch(p) {
     p.image(r.img, 0, 0, r.w * k, r.h * k);
   }
 
+  // ----- the microbes -----
+  // Scattered above the title, scarce at first and denser further up, free to
+  // overlap. Each is sized, stretched and mirrored at random. Some wander
+  // slowly around their spot, others only twitch in place.
+
+  function placeMicrobes() {
+    microbes = [];
+    if (!microbeTextures.length) return;
+    const bottom = -microbesStart + p.height * MICROBES_EARLY;   // met while the title is leaving
+    const top = -microbesTop + p.height * 0.02;
+    const count = MICROBE_PER_KIND * microbeTextures.length;
+    // every kind turns up MICROBE_PER_KIND times, in a random order
+    const kinds = p.shuffle(microbeTextures.flatMap((_, k) => Array(MICROBE_PER_KIND).fill(k)));
+    for (let i = 0; i < count; i++) {
+      const tex = microbeTextures[kinds[i]];
+      const size = p.random(MICROBE_SIZE[0], MICROBE_SIZE[1]) * sizeScale();
+      const scale = size / Math.sqrt(tex.w * tex.h);
+      const m = {
+        tex, size,
+        w: tex.w * scale * p.random(MICROBE_STRETCH[0], MICROBE_STRETCH[1]),
+        h: tex.h * scale * p.random(MICROBE_STRETCH[0], MICROBE_STRETCH[1]),
+        flip: p.random() < 0.5 ? -1 : 1,
+        wander: p.random() < 0.5,
+        base: p.random(-0.6, 0.6),
+        seed: p.random(1000),
+        glow: 0, label: 0,
+      };
+      // the room it may take up, turned any way and wandering as far as it can
+      m.room = Math.hypot(m.w, m.h) / 2 + (m.wander ? MICROBE_DRIFT : 6);
+      for (let k = 0; k < MICROBE_TRIES; k++) {
+        // 0 at the bottom → 1 at the top; the first one right at the bottom, so it is met at once
+        const height = i === 0 && k === 0 ? 0 : Math.pow(p.random(), 1 / MICROBE_CROWDING);
+        m.hx = p.random(size * 0.3, p.width - size * 0.3);
+        m.hy = bottom + (top - bottom) * height;
+        if (microbes.every((o) => Math.hypot(o.hx - m.hx, o.hy - m.hy) > o.room + m.room)) {
+          microbes.push(m);
+          break;
+        }
+      }
+    }
+  }
+
+  function moveMicrobes(t) {
+    for (const m of microbes) {
+      if (m.wander) {
+        m.x = m.hx + (p.noise(m.seed, t * 0.04) - 0.5) * 2 * MICROBE_DRIFT;
+        m.y = m.hy + (p.noise(m.seed + 50, t * 0.04) - 0.5) * 2 * MICROBE_DRIFT;
+        m.angle = m.base + (p.noise(m.seed + 100, t * 0.05) - 0.5) * 0.8;
+        m.squash = 1;
+      } else {
+        m.x = m.hx + (p.noise(m.seed, t * 0.35) - 0.5) * 12;
+        m.y = m.hy + (p.noise(m.seed + 50, t * 0.35) - 0.5) * 12;
+        m.angle = m.base + Math.sin(t * 1.3 + m.seed) * 0.06;
+        m.squash = 1 + Math.sin(t * 1.7 + m.seed * 3) * 0.04;   // breathing in place
+      }
+    }
+  }
+
+  // the microbe under the pointer, if any (tested in its own rotated frame)
+  function hoveredMicrobe() {
+    if (!pointer.active && performance.now() > pointer.tapUntil) return null;
+    for (let i = microbes.length - 1; i >= 0; i--) {
+      const m = microbes[i];
+      const dx = pointer.x - m.x, dy = pointer.y - (m.y + world.shift);
+      const c = Math.cos(-m.angle), s = Math.sin(-m.angle);
+      const lx = dx * c - dy * s, ly = dx * s + dy * c;
+      if ((lx / (m.w * 0.45)) ** 2 + (ly / (m.h * 0.45)) ** 2 < 1) return m;
+    }
+    return null;
+  }
+
+  function drawMicrobes(hovered) {
+    const ctx = p.drawingContext;
+    const t = p.millis() / 1000;
+    const pulse = 0.5 - 0.5 * Math.cos(t * p.TWO_PI / FIRST_GLOW_PERIOD);
+    for (const m of microbes) {
+      m.glow += ((m === hovered ? 1 : 0) - m.glow) * 0.08;
+      m.label = m === hovered ? Math.min(1, m.label + 0.035) : Math.max(0, m.label - 0.08);
+      const y = m.y + world.shift;
+      if (y + m.size < -60 || y - m.size > p.height + 60) continue;
+      p.push();
+      p.translate(m.x, y);
+      p.rotate(m.angle);
+      p.scale(m.flip * m.squash, 1 / m.squash);
+      if (m.glow > 0.01) {
+        ctx.shadowColor = `rgba(255, 240, 215, ${m.glow * (0.4 + 0.3 * pulse)})`;
+        ctx.shadowBlur = m.glow * (12 + 12 * pulse);
+      }
+      const k = 1 + 0.04 * m.glow;
+      p.image(m.tex.img, 0, 0, m.w * k, m.h * k);
+      p.pop();
+      if (m.label > 0) drawLabel(m, y);
+    }
+  }
+
+  // A thin line grows out of the microbe, bends, and runs under its name.
+  function drawLabel(m, y) {
+    const ctx = p.drawingContext;
+    const size = Math.round(p.constrain(p.width / 90, 13, 16));
+    ctx.save();
+    ctx.font = `${size}px ${LABEL_FONT}`;
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '0.12em';
+    const textW = ctx.measureText(m.tex.name).width;
+    const dir = m.x + m.w * 0.4 + 40 + textW > p.width - 16 ? -1 : 1;
+
+    const ax = m.x + dir * m.w * 0.32, ay = y - m.h * 0.32;   // on the microbe's shoulder
+    const ex = ax + dir * 34, ey = ay - 34;                   // the bend
+    const fx = ex + dir * (textW + 12);
+    const l1 = Math.hypot(ex - ax, ey - ay), l2 = Math.abs(fx - ex);
+    const grown = ramp(m.label, 0, 0.7) * (l1 + l2);
+
+    ctx.strokeStyle = 'rgba(245, 238, 225, 0.85)';
+    ctx.lineWidth = 0.75;
+    ctx.shadowColor = 'rgba(255, 245, 225, 0.5)';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    if (grown <= l1) {
+      ctx.lineTo(ax + (ex - ax) * grown / l1, ay + (ey - ay) * grown / l1);
+    } else {
+      ctx.lineTo(ex, ey);
+      ctx.lineTo(ex + dir * (grown - l1), ey);
+    }
+    ctx.stroke();
+
+    ctx.globalAlpha = ramp(m.label, 0.55, 1);
+    ctx.fillStyle = 'rgb(245, 238, 225)';
+    ctx.shadowBlur = 8;
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = dir > 0 ? 'left' : 'right';
+    ctx.fillText(m.tex.name, ex + dir * 6, ey - 7);
+    ctx.restore();
+  }
+
+  function addMicrobeTexture(raw, i) {
+    const trimmed = trim(raw);
+    microbeTextures.push({
+      img: shrink(trimmed, MICROBE_TEXTURE_MAX), w: trimmed.width, h: trimmed.height,
+      name: MICROBE_FILES[i].replace(/^[^_]*_/, '').replace(/\.png$/i, ''),   // microbo_NAME.png
+    });
+  }
+
+  // From here on this is the microbi chapter: its address, its buttons, its
+  // place in the menu; and the flamingo chapter's first frame starts loading.
+  function becomeMicrobi() {
+    if (START === 'bowl') {
+      history.replaceState(null, '', MICROBES_PAGE);
+      document.title = 'Lithium Metamorphosis — Microbi';
+      document.querySelectorAll('#back-btn, #next-btn').forEach((el) => el.remove());
+      renderNavButtons();
+      const tiles = document.querySelectorAll('.menu-tile');
+      tiles.forEach((tile) => tile.classList.remove('current'));
+      tiles[CHAPTER_ORDER.indexOf(MICROBES_PAGE)]?.classList.add('current');
+    }
+    document.getElementById('above').src = NEXT_SCENE_FRAME;
+  }
+
   // ----- setup and main loop -----
 
   p.setup = () => {
     p.pixelDensity(Math.min(2, window.devicePixelRatio || 1));
     p.createCanvas(p.windowWidth, p.windowHeight);
     p.imageMode(p.CENTER);
-    makeLayers();
 
-    for (const raw of rockImages) {
+    rockImages.forEach((raw, i) => {
+      if (!raw) return;
       const trimmed = trim(raw);
-      textures.push({ img: shrink(trimmed, ROCK_TEXTURE_MAX), w: trimmed.width, h: trimmed.height });
+      textures.push({
+        img: shrink(trimmed, ROCK_TEXTURE_MAX), w: trimmed.width, h: trimmed.height, file: ROCK_FILES[i],
+      });
+    });
+    microbeImages.forEach((raw, i) => { if (raw) addMicrobeTexture(raw, i); });
+    // primordiale fetches them while the rocks fall, ready for when it reaches them
+    if (START === 'bowl') {
+      MICROBE_FILES.forEach((file, i) => {
+        p.loadImage('../assets/images/' + encodeURIComponent(file), (img) => addMicrobeTexture(img, i), () => {});
+      });
     }
-    microbeTextures = microbeImages.map((raw) => shrink(trim(raw), 600));
 
-    // the single rock waiting at the bottom
-    resetSurface();
-    first = makeRock(FIRST_ROCK_SIZE, textures[ROCK_FILES.indexOf(FIRST_ROCK_FILE)]);
+    // A small seed stone waits at the bottom of the bowl.
+    makeBowl();
+    first = makeRock(FIRST_ROCK_SIZE, textures.find((tex) => tex.file === FIRST_ROCK_FILE) || textures[0]);
     first.angle = 0;
-    first.x = p.width / 2;
+    first.x = bowl.cx;
     first.y = restY(first, first.x);
+    first.ox = first.oy = 0;
     first.state = 'rest';
     addToSurface(first);
-    pile.push(first);
+    rocks.push(first);
+
+    riseTop = p.height * CAMERA_RISE;
+    microbesStart = riseTop + p.height * TITLE_OUT;
+    microbesTop = microbesStart + p.height * MICROBE_SCREENS;
+    if (START === 'microbes') placeMicrobes();   // primordiale never reaches them
+    startedAt = lastFrame = performance.now();
+
+    if (START === 'bowl') setShift(0);   // the title waits above, out of view
+
+    // microbi.html: the title has just gone and the camera is already rising
+    if (START === 'microbes') {
+      phase = 'microbes';
+      rocks = [];
+      setShift(microbesStart);
+      cameraSpeed = p.height / MICROBE_PACE;
+      becomeMicrobi();
+    }
   };
+
+  function setShift(shift) {
+    world.shift = shift;
+    const style = document.body.style;
+    style.setProperty('--shift', Math.min(shift, p.height * 1.3).toFixed(1));   // the photo only reaches so far
+    style.setProperty('--depth', (0.5 * Math.min(1, shift / riseTop) +
+      0.5 * p.constrain((shift - riseTop) / (microbesTop - riseTop), 0, 1)).toFixed(3));
+    style.setProperty('--title-shift', (shift - riseTop).toFixed(1));
+  }
+
+  // among the microbes the light slowly warms, 0 → 1
+  function setWarmth(k) {
+    const style = document.body.style;
+    style.setProperty('--warm', k.toFixed(3));
+    const c = BG_DARK.map((v, i) => Math.round(v + (BG_WARM[i] - v) * k));
+    style.backgroundColor = `rgb(${c.join(',')})`;
+  }
 
   p.draw = () => {
     const now = performance.now();
+    const dt = Math.min(0.05, (now - lastFrame) / 1000);
+    lastFrame = now;
+    const t = (now - startedAt) / 1000;
 
-    if (phase === 'pile') {
-      if (pile.length < MAX_PILE && overStones() && now - lastDrop > DROP_EVERY * 1000) {
-        lastDrop = now;
-        hasDropped = true;
-        dropRock();
+    // rocks keep coming until the title appears: a few on their own, many
+    // more while the pointer is over the bowl
+    if (phase === 'bowl' || phase === 'rise' || phase === 'title' || phase === 'beyond') {
+      const hovering = phase === 'bowl' && pointerInBowl();
+      if (phase === 'bowl' && rocks.length < MAX_ROCKS && fill() < BOWL_FULL) {
+        spawnDebt += dt * (hovering ? HOVER_RATE
+          : p.lerp(SPAWN_RATE[0], SPAWN_RATE[1], ramp(t, SPAWN_RAMP[0], SPAWN_RAMP[1])));
+        // the very first one comes soon, so the scene doesn't sit still
+        if (!hasDropped && t > 1.5) spawnDebt = Math.max(spawnDebt, 1);
+        while (spawnDebt >= 1) {
+          spawnDebt -= 1;
+          hasDropped = true;
+          spawnRock(hovering);
+        }
       }
-      if (captionsEndedAt && now - captionsEndedAt > CAMERA_DELAY * 1000) {
-        phase = 'camera';
-        cameraStart = now;
+      updateRocks();
+    }
+
+    if (phase === 'bowl' && captionsEndedAt && now - captionsEndedAt > CAMERA_DELAY * 1000) {
+      phase = 'rise';
+      riseStartedAt = now;
+      // the camera will stop, with the title in the middle of the screen, just
+      // as the highest rock in the bowl has gone below it
+      riseTop = p.height - Math.min(...surface) + RISE_MARGIN;
+      microbesStart = riseTop + p.height * TITLE_OUT;
+      microbesTop = microbesStart + p.height * MICROBE_SCREENS;
+      placeMicrobes();   // the first ones are met while the title leaves
+    }
+
+    // up from the bowl, easing to a stop as the rocks go
+    if (phase === 'rise') {
+      const k = Math.min(1, (now - riseStartedAt) / (RISE_TIME * 1000));
+      setShift(riseTop * k * k * (3 - 2 * k));
+      if (k >= 1) {
+        phase = 'title';
+        titleAt = now;
+        document.getElementById('chapter-title').classList.add('shown');
+      }
+    }
+    if (phase === 'title' && now - titleAt > TITLE_HOLD * 1000) {
+      phase = 'beyond';
+      cameraSpeed = 0;
+      document.getElementById('chapter-title').classList.remove('shown');   // blurs out as it came
+    }
+
+    // on again, gathering speed to the pace the microbes go on with: past the
+    // title and on among the microbes without a break
+    if (phase === 'beyond') {
+      cameraSpeed = Math.min(p.height / MICROBE_PACE, cameraSpeed + p.height / MICROBE_PACE * dt / CAMERA_START);
+      setShift(world.shift + cameraSpeed * dt);
+      if (world.shift >= microbesStart) {
+        phase = 'microbes';
+        rocks = [];   // long out of sight
+        if (!microbes.length) placeMicrobes();
+        becomeMicrobi();
       }
     }
 
-    if (phase !== 'pile') {
-      const c = ramp((now - cameraStart) / 1000, 0, CAMERA_MOVE);
-      world.shift = c * p.height * 1.15;
-      document.body.style.setProperty('--shift', world.shift.toFixed(1));
-      document.body.style.setProperty('--depth', (c * 0.5).toFixed(3));
-      if (phase === 'camera' && c >= TITLE_DURING_CAMERA) startTitle(now);
+    // The camera rises through the microbes and waits while one is being read;
+    // the light warms with the height. At the top it keeps going, a little
+    // faster, up out of the ground.
+    const hovered = phase === 'microbes' ? hoveredMicrobe() : null;
+    document.body.classList.toggle('over-microbe', !!hovered);
+    if (phase === 'microbes' || phase === 'emerge') {
+      const pace = p.height / MICROBE_PACE * (phase === 'emerge' ? EMERGE_SPEED : 1);
+      cameraSpeed += ((hovered ? 0 : pace) - cameraSpeed) * Math.min(1, dt * 1.5);
+      setShift(world.shift + cameraSpeed * dt);
+      setWarmth(ramp(world.shift, microbesStart, microbesTop));
+      if (phase === 'microbes' && world.shift >= microbesTop) phase = 'emerge';
+    }
+    // the flamingo chapter's first frame comes down from above until it fills the screen
+    if (phase === 'emerge') {
+      const up = Math.min(p.height, world.shift - microbesTop);
+      document.getElementById('above').style.transform = `translateY(${(up - p.height).toFixed(1)}px)`;
+      document.body.style.setProperty('--emerge', (up / p.height).toFixed(3));
+      if (up >= p.height) {
+        phase = 'leaving';
+        window.location.href = NEXT_SCENE;   // no fade: that page starts on this frame
+      }
     }
 
-    updatePile();
+    moveMicrobes(t);
     p.clear();
-    drawPile();
-
-    if (phase !== 'title') return;
-
-    // ----- title: the microbes, seen only through the letters -----
-    const tt = (now - titleStart) / 1000;
-    const end = TITLE_FADE + TITLE_HOLD;
-    const visible = ramp(tt, 0, TITLE_FADE) * (1 - ramp(tt, end, end + TITLE_FADE));
-
-    layer.clear();
-    drawMicrobes(layer, tt);
-    drawLetters();
-    const ctx = p.drawingContext;
-    ctx.globalAlpha = visible;
-    ctx.drawImage(letterLayer.elt, 0, 0, p.width, p.height);
-    ctx.globalAlpha = 1;
-
-    if (tt >= end + TITLE_FADE && !leaving) {
-      leaving = true;
-      goToNextChapter();
-    }
+    if (rocks.length) drawRocks();
+    drawMicrobes(hovered);
   };
 
-  function startTitle(now) {
-    phase = 'title';
-    titleStart = now;
-    const title = document.getElementById('chapter-title');
-    title.classList.add('visible');
-    setTimeout(() => title.classList.remove('visible'), (TITLE_FADE + TITLE_HOLD) * 1000);
-
-    // paths as fractions of the screen; each one sways along its way.
-    // The two paths never cross: microbo2 keeps to the upper-left half,
-    // microbo1 rises on the right, below microbo2's line.
-    microbes = [
-      // microbo2: bottom left → top right
-      { img: microbeTextures[1], from: [-0.15, 0.85], to: [0.85, -0.15], waves: 1.5, amp: 0.025, delay: 0.5 },
-      // microbo1: bottom → top
-      { img: microbeTextures[0], from: [0.72, 1.25], to: [0.85, 0], waves: 2, amp: 0.03, delay: 1.5 },
-    ].map((m) => ({ ...m, seed: p.random(p.TWO_PI) }));
-  }
-
-  // Two microbes creeping in on wavy paths of their own (they ignore the pointer).
-  function drawMicrobes(g, tt) {
-    const W = p.width, H = p.height;
-    const size = Math.min(W, H) * MICROBE_SIZE;
-    for (const m of microbes) {
-      const u = (tt - m.delay) / MICROBE_TRAVEL;
-      if (u < 0 || u > 1) continue;
-
-      const a = p.createVector(m.from[0] * W, m.from[1] * H);
-      const b = p.createVector(m.to[0] * W, m.to[1] * H);
-      const dir = p5.Vector.sub(b, a);
-      const side = p.createVector(-dir.y, dir.x).normalize();
-      const pos = p5.Vector.lerp(a, b, u)
-        .add(side.mult(Math.sin(u * p.TWO_PI * m.waves + m.seed) * m.amp * Math.min(W, H)));
-
-      // turn smoothly to face where it is heading (images are drawn pointing up)
-      const heading = m.prev ? Math.atan2(pos.y - m.prev.y, pos.x - m.prev.x) : dir.heading();
-      if (m.angle === undefined) m.angle = heading;
-      m.angle += Math.atan2(Math.sin(heading - m.angle), Math.cos(heading - m.angle)) * 0.03;
-      m.prev = pos;
-
-      const scale = size / Math.sqrt(m.img.width * m.img.height);
-      g.push();
-      g.translate(pos.x, pos.y);
-      g.rotate(m.angle + p.HALF_PI);
-      g.image(m.img, 0, 0, m.img.width * scale, m.img.height * scale);
-      g.pop();
-    }
-  }
-
-  // Fills the title letters, then keeps only what falls inside them.
-  function drawLetters() {
-    const lctx = letterLayer.drawingContext;
-    letterLayer.clear();
-    lctx.save();
-    if (titleLayout.rotate) {
-      lctx.translate(titleLayout.w, 0);
-      lctx.rotate(Math.PI / 2);
-    }
-    lctx.fillStyle = '#fff';
-    lctx.textBaseline = 'alphabetic';
-    for (const line of titleLayout.lines) {
-      lctx.font = `${line.fontSize}px ${TITLE_FONT}`;
-      const natural = lctx.measureText(line.text).width;
-      lctx.save();
-      lctx.translate(line.x, line.y);
-      lctx.scale(line.length / natural, 1);   // same stretch as the SVG textLength
-      lctx.fillText(line.text, 0, 0);
-      lctx.restore();
-    }
-    lctx.restore();
-    lctx.save();
-    lctx.globalCompositeOperation = 'source-in';
-    lctx.drawImage(layer.elt, 0, 0, p.width, p.height);
-    lctx.restore();
-  }
-
+  // A resize or a phone turned sideways rebuilds what hasn't been seen yet:
+  // the bowl while it is still on screen, the microbes until we reach them.
   p.windowResized = () => {
     p.resizeCanvas(p.windowWidth, p.windowHeight);
-    makeLayers();
+    if (phase === 'bowl' && first) {   // (not before setup has made the first rock)
+      makeBowl();
+      rocks = [first];
+      first.x = bowl.cx;
+      first.y = restY(first, first.x);
+      addToSurface(first);
+    }
+    if (phase === 'bowl' || phase === 'rise' || phase === 'title' || phase === 'beyond') {
+      if (phase === 'bowl') riseTop = p.height * CAMERA_RISE;   // measured again when the rise starts
+      microbesStart = riseTop + p.height * TITLE_OUT;
+      microbesTop = microbesStart + p.height * MICROBE_SCREENS;
+      if (START === 'microbes') placeMicrobes();
+    }
   };
 }

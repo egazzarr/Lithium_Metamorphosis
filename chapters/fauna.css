@@ -1,0 +1,149 @@
+/* Touch drives the scene on phones: no scrolling, zooming or text selection */
+html, body {
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  --bg: #fff;
+  --fg: #2a2420;             /* buttons and menu stay readable on the white sky */
+}
+
+/* Opened directly or from the menu, the page fades in. Coming up out of the
+   microbes (?from=microbi) it doesn't: the last frame there is this page's
+   first frame. Shown inside microbi (?embed) it is only that still frame. */
+body:not(.seamless):not(.embed) {
+  animation: fauna-in 2.5s ease-out backwards;     /* not "both": once done it must let the fade-out on leaving work */
+}
+
+@keyframes fauna-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+body.embed .nav-btn,
+body.embed #menu-btn { display: none; }
+
+/* inside microbi, its own rock shows through the near mountains' powdery feet */
+html:has(body.embed), body.embed { background: transparent; }
+body.embed #ground-strip { display: none; }
+
+/* The rock ground of the microbes chapter as it looks at its very end (the
+   same layers as #backdrop in primordiale.css, with --depth and --warm at 1,
+   and --shift at its 1.3 screen heights). fauna.js shows it only below the
+   line where the near mountains' feet start dissolving, so they dissolve into
+   the rock we came up through; the line sinks with them as they slide away. */
+#ground-strip {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+#ground {
+  position: absolute;
+  top: -86vh;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(65vh);
+  filter: brightness(1.45);
+  background:
+    linear-gradient(rgba(150, 84, 42, 0.7), rgba(150, 84, 42, 0.7)),
+    linear-gradient(to bottom, rgba(150, 128, 100, 0.25) 0%, rgba(150, 128, 100, 0) 70%),
+    url('../assets/images/background.jpeg') center / cover no-repeat;
+}
+
+/* the far mountains fill the screen, standing on its bottom */
+#m1 {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 100%;
+  pointer-events: none;
+}
+
+/* The hands holding the lithium, low in the middle; fauna.js sizes them.
+   Positions inside are fractions of hands.png (1536 × 2048): the cupped palms
+   sit around 52% across and 66–73% down. */
+#offering {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  aspect-ratio: 1536 / 2048;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+#hands {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* litio_1.PNG, its visible shape centred in the palms; fauna.js decides what a
+   click there reaches */
+#litio {
+  position: absolute;
+  left: 26.6%;
+  top: 36.9%;
+  width: 55%;
+  transform-origin: 46% 70%;
+  animation: litio-pulse 3.2s ease-in-out infinite;
+}
+
+/* a pale, cold lithium glow, breathing */
+@keyframes litio-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(150, 190, 255, 0.45));
+  }
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 34px rgba(150, 190, 255, 0.9));
+  }
+}
+
+#flocks {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#flocks img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+
+/* the near mountains, m7 and m6, in front of everything; fauna.js draws them and slides them away */
+#near {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* after a click on the lithium: the orology chapter's relief, sized as that
+   chapter's background, fading in over everything */
+#relief {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  background: #2a1a4a url('../assets/images/oro_si.PNG') center / cover no-repeat;
+  opacity: 0;
+  transition: opacity 2s ease-in-out;
+}
+
+#relief.shown {
+  opacity: 1;
+}

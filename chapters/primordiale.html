@@ -8,40 +8,15 @@
   <link rel="stylesheet" href="primordiale.css">
 
 </head>
-<body data-no-next>
+<body data-start="bowl">
   <div id="backdrop"></div>
+  <!-- the first frame of the flamingo chapter, above the ground; loaded once
+       we reach the microbes -->
+  <iframe id="above" title="" tabindex="-1" aria-hidden="true"></iframe>
 
-  <svg id="chapter-title" aria-label="Lithium Metamorphosis">
-    <defs>
-      <!-- everything except the inside of the letters -->
-      <mask id="outside-letters" maskUnits="userSpaceOnUse">
-        <rect x="0" y="0" width="100%" height="100%" fill="#fff"/>
-        <g class="title-group title-mask">
-          <text lengthAdjust="spacingAndGlyphs">LITHIUM</text>
-          <text lengthAdjust="spacingAndGlyphs">METAMORPHOSIS</text>
-        </g>
-      </mask>
-      <filter id="title-blur" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
-        <feGaussianBlur stdDeviation="4"/>
-      </filter>
-    </defs>
-
-    <!-- soft glow, kept only on the outer side of the outline -->
-    <g mask="url(#outside-letters)">
-      <g filter="url(#title-blur)">
-        <g class="title-group title-glow">
-          <text lengthAdjust="spacingAndGlyphs">LITHIUM</text>
-          <text lengthAdjust="spacingAndGlyphs">METAMORPHOSIS</text>
-        </g>
-      </g>
-    </g>
-
-    <!-- the crisp outline itself -->
-    <g class="title-group title-line">
-      <text lengthAdjust="spacingAndGlyphs">LITHIUM</text>
-      <text lengthAdjust="spacingAndGlyphs">METAMORPHOSIS</text>
-    </g>
-  </svg>
+  <div id="chapter-title">
+    <img src="../assets/images/titolo1.png" alt="Lithium Metamorphosis">
+  </div>
 
   <p id="caption"></p>
 
