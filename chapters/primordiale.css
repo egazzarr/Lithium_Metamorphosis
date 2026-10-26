@@ -31,6 +31,14 @@ body {
   right: 0;
   transform: translateY(calc(var(--shift) * 0.5px));
   z-index: -2;
+  /* coming up out of the ground (--emerge 0 → 1), the warm light thins out
+     towards the top of the screen, leaving the plain photo (#backdrop-plain)
+     behind the mountains: none from 15% of the screen height up, all of it
+     from 60% down. The box starts 21vh above the screen by then. */
+  -webkit-mask-image: linear-gradient(to bottom,
+    rgba(0, 0, 0, calc(1 - var(--emerge))) 36vh, #000 81vh);
+  mask-image: linear-gradient(to bottom,
+    rgba(0, 0, 0, calc(1 - var(--emerge))) 36vh, #000 81vh);
   pointer-events: none;
   filter: brightness(calc(1 + var(--warm) * 0.45));
   background:
@@ -45,6 +53,19 @@ body {
     linear-gradient(rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45 - var(--warm) * 0.2)),
                     rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45 - var(--warm) * 0.2))),
     url('../assets/images/background.jpeg') center / cover no-repeat;
+}
+
+/* the photo itself, without any light or darkness, under #backdrop */
+#backdrop-plain {
+  position: fixed;
+  top: -86vh;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(calc(var(--shift) * 0.5px));
+  z-index: -3;
+  pointer-events: none;
+  background: url('../assets/images/background.jpeg') center / cover no-repeat;
 }
 
 #above {

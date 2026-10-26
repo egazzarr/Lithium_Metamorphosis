@@ -8,8 +8,7 @@ html, body {
 }
 
 body {
-  --bg: #fff;
-  --fg: #2a2420;             /* buttons and menu stay readable on the white sky */
+  --bg: #2a1d14;
 }
 
 /* Opened directly or from the menu, the page fades in. Coming up out of the
@@ -27,29 +26,37 @@ body:not(.seamless):not(.embed) {
 body.embed .nav-btn,
 body.embed #menu-btn { display: none; }
 
-/* inside microbi, its own rock shows through the near mountains' powdery feet */
+/* inside microbi, its own rock shows behind the mountains */
 html:has(body.embed), body.embed { background: transparent; }
-body.embed #ground-strip { display: none; }
+body.embed #ground-box { display: none; }
 
-/* The rock ground of the microbes chapter as it looks at its very end (the
-   same layers as #backdrop in primordiale.css, with --depth and --warm at 1,
-   and --shift at its 1.3 screen heights). fauna.js shows it only below the
-   line where the near mountains' feet start dissolving, so they dissolve into
-   the rock we came up through; the line sinks with them as they slide away. */
-#ground-strip {
+/* The rock ground of the microbes chapter behind everything, as it looks at
+   the very end of the microbes (the same layers as #backdrop and
+   #backdrop-plain in primordiale.css, with --depth, --warm and --emerge at 1,
+   and --shift at its 1.3 screen heights), so the page starts on the frame
+   microbi ends on: warm light low down, thinning out towards the top of the
+   screen to the plain photo behind the mountains. */
+#ground-box {
   position: fixed;
   inset: 0;
   pointer-events: none;
 }
 
-#ground {
+#ground,
+#ground-plain {
   position: absolute;
   top: -86vh;
   bottom: 0;
   left: 0;
   right: 0;
   transform: translateY(65vh);
+  background: url('../assets/images/background.jpeg') center / cover no-repeat;
+}
+
+#ground {
   filter: brightness(1.45);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 36vh, #000 81vh);
+  mask-image: linear-gradient(to bottom, transparent 36vh, #000 81vh);
   background:
     linear-gradient(rgba(150, 84, 42, 0.7), rgba(150, 84, 42, 0.7)),
     linear-gradient(to bottom, rgba(150, 128, 100, 0.25) 0%, rgba(150, 128, 100, 0) 70%),

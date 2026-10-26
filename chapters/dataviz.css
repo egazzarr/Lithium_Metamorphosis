@@ -57,18 +57,6 @@
   outline: none;
 }
 
-#timelapse .prompt {
-  position: fixed;
-  left: max(24px, 6vw);
-  bottom: max(28px, 5vh);
-  font-size: 14px;
-  letter-spacing: .18em;
-  pointer-events: none;
-  transition: opacity .35s;
-}
-
-#timelapse .prompt.hidden { opacity: 0; }
-
 #timelapse .source {
   position: fixed;
   right: max(20px, 5vw);
@@ -99,5 +87,4 @@
 
 @media (max-width: 800px) {
   #timelapse .source { bottom: 10px; right: 14px; max-width: 80vw; gap: 4px 12px; font-size: 11px; }
-  #timelapse .prompt { left: 20px; bottom: 52px; font-size: 12px; }
 }

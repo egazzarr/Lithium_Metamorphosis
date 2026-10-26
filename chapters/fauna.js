@@ -1,8 +1,10 @@
 /*
-  The far mountains, m1, fill the screen; in front of them two hands hold the
-  lithium, their lower half hidden at first behind the near mountains, m7 and,
-  in front of it, m6, which fills the lower half of the screen. Three flocks
-  of flamingos cross between them in the whole chapter, either way. The near
+  The far mountains, m1, fill the screen, on the rock photo of the microbes,
+  warm low down and plain towards the top. Three flocks of flamingos cross in front of
+  them in the whole chapter, either way, and in front of those two hands
+  hold the lithium, low on the screen, hidden at first behind the near
+  mountains, m7 and, in front of it, m6, which fills the lower half of the
+  screen. The near
   mountains slowly slide away, m6 to the left and down, m7 to the right and
   down, until they have gone and the hands are in view. A click on the
   lithium fades the relief of the orology chapter in over everything, and
@@ -27,8 +29,11 @@ const NEAR_WAIT = 1.5;           // seconds before they start to move
 const NEAR_TIME = 22;            // seconds they take to slide away
 const NEAR_POWDER = 0.16;        // share of their height that dissolves at the foot (as in the tool)
 
-// The hands with the lithium, standing on the bottom of the screen
-const HANDS_WIDTH = [0.85, 1.2]; // screen heights, at most this many screen widths
+// The hands with the lithium, low in the middle, their bottom cut off by the
+// bottom of the screen: they come out only once the near mountains have
+// almost gone
+const HANDS_WIDTH = [0.72, 1.05]; // screen heights, at most this many screen widths
+const HANDS_CUT = 0.22;          // share of their height below the screen
 
 // Flamingos: three flocks in the whole chapter
 const FLOCK_FILE = '../assets/images/flamingo_side.gif';
@@ -54,15 +59,20 @@ const ease = (t) => t * t * (3 - 2 * t);
 
 const near = document.getElementById('near');
 const nearCtx = near.getContext('2d');
-for (const layer of NEAR) {
+const nearLoaded = NEAR.map((layer) => new Promise((done) => {
   layer.img = new Image();
-  layer.img.onload = () => placeNear();
+  layer.img.onload = layer.img.onerror = () => { placeNear(); done(); };
   layer.img.src = '../assets/images/powder/' + layer.file;
-}
+}));
+
+// The hands and the lithium load only once the near mountains are drawn in
+// front of them, so they are never seen before those cover them.
+Promise.all(nearLoaded).then(() => {
+  for (const img of document.querySelectorAll('#offering img[data-src]')) img.src = img.dataset.src;
+});
 const offering = document.getElementById('offering');
 const litio = document.getElementById('litio');
 const flockLayer = document.getElementById('flocks');
-const groundStrip = document.getElementById('ground-strip');
 const behindNear = [document.getElementById('m1'), offering, flockLayer];
 
 let W = 0, H = 0, dpr = 1;
@@ -74,13 +84,16 @@ function resize() {
   dpr = Math.min(2, window.devicePixelRatio || 1);
   near.width = Math.round(W * dpr);
   near.height = Math.round(H * dpr);
-  offering.style.width = Math.min(HANDS_WIDTH[0] * H, HANDS_WIDTH[1] * W) + 'px';
+  const handsW = Math.min(HANDS_WIDTH[0] * H, HANDS_WIDTH[1] * W);
+  offering.style.width = handsW + 'px';
+  offering.style.bottom = -HANDS_CUT * handsW * 2048 / 1536 + 'px';
   placeNear();
 }
 
 // Each just tall enough that its ridge stands where it should with its foot
 // on the bottom of the screen. Below the highest line where a foot starts
-// dissolving, only the rock ground is behind them.
+// dissolving, only the rock ground is behind them (m1, the hands and the
+// flocks are cut off there).
 function placeNear() {
   nearCtx.setTransform(1, 0, 0, 1, 0, 0);
   nearCtx.clearRect(0, 0, near.width, near.height);
@@ -109,8 +122,10 @@ function placeNear() {
       }
     }
   }
-  for (const el of behindNear) el.style.clipPath = `inset(0 0 ${(H - line).toFixed(1)}px 0)`;
-  groundStrip.style.clipPath = `inset(${line.toFixed(1)}px 0 0 0)`;
+  for (const el of behindNear) {
+    const below = el.getBoundingClientRect().bottom - line;   // the hands reach below the screen
+    el.style.clipPath = below > 0 ? `inset(0 0 ${below.toFixed(1)}px 0)` : 'none';
+  }
 }
 
 // ----- flamingos -----
@@ -179,7 +194,7 @@ function finale() {
 // ----- pointer: the lithium, once m6 has moved away from it -----
 
 function onLitio(x, y) {
-  if (slide < 0.5) return false;
+  if (slide < 0.8) return false;   // only once the hands have come out
   const r = litio.getBoundingClientRect();
   // the stone's visible shape fills roughly the middle of its picture
   const cx = r.left + r.width * 0.46, cy = r.top + r.height * 0.5;

@@ -14,7 +14,7 @@
     - on a portrait screen (a phone held upright) the plot shrinks to the top
       half and the donut sits below it, instead of side by side;
     - it waits, hidden, until dataviz.js calls startTimelapse() as the news fly
-      away, then plays by itself; a click replays it once it has finished.
+      away, then plays once by itself (no replay, no prompt).
 */
 
 (() => {
@@ -26,7 +26,6 @@
   const timelapse = document.getElementById('timelapse');
   const canvas = document.getElementById('scene');
   const ctx = canvas.getContext('2d');
-  const promptNode = document.getElementById('prompt');
   const accessibleStatus = document.getElementById('accessible-status');
   const startYear = DATA[0].year;
   const endYear = DATA[DATA.length - 1].year;
@@ -426,7 +425,6 @@
     const done = render(now - started, delta);
     if (done) {
       phase = 'done'; falling = []; render(Infinity, 0);
-      promptNode.textContent = 'CLICK TO REPLAY'; promptNode.classList.remove('hidden');
       accessibleStatus.textContent = 'Completed. 2025 world mine production: 290,000 tonnes of lithium; Chile: 56,000 tonnes. Chilean refined lithium product mix in 2023: 82% carbonate, 11% hydroxide, 7% sulfate.';
     } else frameId = requestAnimationFrame(frame);
   }
@@ -435,7 +433,7 @@
     cancelAnimationFrame(frameId); phase = 'running'; falling = []; spawnCarry = 0;
     resetDonutLayer();
     lastAnnouncedYear = -1; started = performance.now(); previousFrame = started;
-    promptNode.classList.add('hidden'); frameId = requestAnimationFrame(frame);
+    frameId = requestAnimationFrame(frame);
   }
 
   // dataviz.js shows it and starts it as the news fly away
@@ -443,12 +441,6 @@
     timelapse.classList.add('shown');
     play();
   };
-  document.body.addEventListener('click', event => {
-    if (phase === 'done' && !event.target.closest('a, button, nav')) play();
-  });
-  canvas.addEventListener('keydown', event => {
-    if (phase === 'done' && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); play(); }
-  });
   window.addEventListener('resize', resize);
   document.fonts.load(`16px ${TEXT_FONT}`).then(resize);   // the canvas text needs it loaded
   resize();

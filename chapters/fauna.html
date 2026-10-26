@@ -8,20 +8,24 @@
   <link rel="stylesheet" href="fauna.css">
 </head>
 <body>
-  <!-- back to front: the rock ground of the microbes, seen only through the
-       powdery feet of the near mountains; m1, the hands holding the
-       lithium, the flamingos, and the near mountains, m7 and m6, which slide
-       away to show the hands (fauna.js) -->
-  <div id="ground-strip"><div id="ground"></div></div>
+  <!-- back to front: the rock ground of the microbes, behind everything,
+       its warm light fading; m1, the flamingos, the hands holding the
+       lithium, and the near mountains, m7 and m6, which slide away to show
+       the hands (fauna.js) -->
+  <div id="ground-box">
+    <div id="ground-plain"></div>
+    <div id="ground"></div>
+  </div>
 
   <img id="m1" src="../assets/images/m1.png" alt="">
 
-  <div id="offering">
-    <img id="hands" src="../assets/images/hands.png" alt="">
-    <img id="litio" src="../assets/images/litio_1.PNG" alt="A lump of lithium resting in two hands — go on to the next chapter">
-  </div>
-
   <div id="flocks"></div>
+
+  <div id="offering">
+    <!-- loaded by fauna.js once the near mountains stand in front of them -->
+    <img id="hands" data-src="../assets/images/hands.png" alt="">
+    <img id="litio" data-src="../assets/images/litio_1.PNG" alt="A lump of lithium resting in two hands — go on to the next chapter">
+  </div>
 
   <canvas id="near"></canvas>
 
