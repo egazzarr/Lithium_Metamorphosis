@@ -211,5 +211,5 @@ body.fade-out {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: url('../images/background.jpeg') center / cover no-repeat;
+  background: url('../images/background.png') center / cover no-repeat;
 }

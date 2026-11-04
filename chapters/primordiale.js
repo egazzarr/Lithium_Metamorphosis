@@ -112,8 +112,10 @@ const LABEL_FONT = "'Lato Thin', sans-serif";
 const MICROBES_PAGE = 'microbi.html';
 const NEXT_SCENE = 'fauna.html?from=microbi';
 const NEXT_SCENE_FRAME = 'fauna.html?embed';   // its first frame, shown above the ground
-const EMERGE_SPEED = 1.6;        // × the microbe pace while we come up out of the ground (fauna.js RISE matches it)
 const MICROBES_EARLY = 0.2;      // screen heights before microbi's start where the first microbes already are: just out of view above the title
+const SURFACE_REVEAL = 0.18;     // the first mountain frame remains just visible until the prompt is clicked
+const SURFACE_STOP_TIME = 3.5;
+const EMERGE_TIME = 4.5;
 
 // The page colour behind everything, from the dark to the warm brown-orange
 // the flamingo scene starts from (fauna.css)
@@ -184,6 +186,10 @@ function sceneSketch(p) {
   let cameraSpeed = 0;
   let riseStartedAt = 0, titleAt = 0;   // when the camera set off from the bowl, and when it stopped at the title
   let lastFrame = 0;
+  let surfaceReady = false;
+  let surfaceStopStartedAt = 0;
+  let surfaceStopFrom = 0;
+  let emergeStartedAt = 0;
 
   // A missing file is skipped instead of holding the whole scene on "Loading..."
   p.preload = () => {
@@ -615,6 +621,15 @@ function sceneSketch(p) {
       cameraSpeed = p.height / MICROBE_PACE;
       becomeMicrobi();
     }
+
+    const surfaceCta = document.getElementById('surface-cta');
+    surfaceCta?.addEventListener('click', () => {
+      if (phase !== 'surface') return;
+      phase = 'emerge';
+      emergeStartedAt = performance.now();
+      cameraSpeed = 0;
+      surfaceCta.classList.remove('visible');
+    });
   };
 
   function setShift(shift) {
@@ -703,18 +718,41 @@ function sceneSketch(p) {
     // faster, up out of the ground.
     const hovered = phase === 'microbes' ? hoveredMicrobe() : null;
     document.body.classList.toggle('over-microbe', !!hovered);
-    if (phase === 'microbes' || phase === 'emerge') {
-      const pace = p.height / MICROBE_PACE * (phase === 'emerge' ? EMERGE_SPEED : 1);
+    if (phase === 'microbes') {
+      const pace = p.height / MICROBE_PACE;
       cameraSpeed += ((hovered ? 0 : pace) - cameraSpeed) * Math.min(1, dt * 1.5);
       setShift(world.shift + cameraSpeed * dt);
       setWarmth(ramp(world.shift, microbesStart, microbesTop));
-      if (phase === 'microbes' && world.shift >= microbesTop) phase = 'emerge';
+      if (phase === 'microbes' && world.shift >= microbesTop) {
+        phase = 'surface-stop';
+        surfaceStopStartedAt = now;
+        surfaceStopFrom = world.shift;
+        cameraSpeed = 0;
+      }
+    }
+    if (phase === 'surface-stop') {
+      const k = Math.min(1, (now - surfaceStopStartedAt) / (SURFACE_STOP_TIME * 1000));
+      const eased = k * k * (3 - 2 * k);
+      setShift(surfaceStopFrom + p.height * SURFACE_REVEAL * eased);
+      setWarmth(1);
+      document.getElementById('above').style.transform = `translateY(${(-1 + SURFACE_REVEAL * eased) * 100}%)`;
+      document.body.style.setProperty('--emerge', (SURFACE_REVEAL * eased).toFixed(3));
+      if (k >= 1) {
+        phase = 'surface';
+        if (!surfaceReady) {
+          surfaceReady = true;
+          document.getElementById('surface-cta')?.classList.add('visible');
+        }
+      }
     }
     // the flamingo chapter's first frame comes down from above until it fills the screen
     if (phase === 'emerge') {
-      const up = Math.min(p.height, world.shift - microbesTop);
+      const k = Math.min(1, (now - emergeStartedAt) / (EMERGE_TIME * 1000));
+      const eased = k * k * (3 - 2 * k);
+      const up = p.height * eased;
+      setShift(microbesTop + p.height * SURFACE_REVEAL + up);
       document.getElementById('above').style.transform = `translateY(${(up - p.height).toFixed(1)}px)`;
-      document.body.style.setProperty('--emerge', (up / p.height).toFixed(3));
+      document.body.style.setProperty('--emerge', (SURFACE_REVEAL + up / p.height).toFixed(3));
       if (up >= p.height) {
         phase = 'leaving';
         window.location.href = NEXT_SCENE;   // no fade: that page starts on this frame

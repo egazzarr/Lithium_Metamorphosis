@@ -12,7 +12,10 @@ function goToNextChapter() {
   const current = window.location.pathname.split('/').pop();
   const i = CHAPTER_ORDER.indexOf(current);
   if (i !== -1 && i + 1 < CHAPTER_ORDER.length) {
-    goToChapter(CHAPTER_ORDER[i + 1]);
+    const next = CHAPTER_ORDER[i + 1];
+    goToChapter(current === 'dataviz.html' && next === 'interviews.html'
+      ? next + '?from=dataviz'
+      : next);
   }
 }
 
@@ -114,6 +117,11 @@ function createChapterSketch(sketch) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const favicon = document.createElement('link');
+  favicon.rel = 'icon';
+  favicon.type = 'image/png';
+  favicon.href = '../assets/images/litio_1.PNG';
+  document.head.appendChild(favicon);
   renderNavButtons();
   renderMenu();
 });

@@ -1,0 +1,222 @@
+#voice-art {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(70vw, 93.333vh);
+  aspect-ratio: 4 / 3;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  isolation: isolate;
+  animation: voices-in 2.2s ease-out both;
+}
+
+#voice-core-glow {
+  position: absolute;
+  left: 47%;
+  top: 49%;
+  width: 42%;
+  height: 46%;
+  z-index: 0;
+  opacity: 0.48;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.78) 0%, rgba(245, 248, 239, 0.38) 34%, transparent 76%);
+  filter: blur(30px);
+  transform: translate(-50%, -50%) scale(0.7, 0.84);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+#voice-core-glow.active {
+  opacity: 0.62;
+  transform: translate(-50%, -50%) scale(1, 1.1);
+}
+
+.voice-glow {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 14%;
+  height: 7%;
+  z-index: 0;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-22deg) scale(0.7);
+  background: radial-gradient(ellipse, rgba(229, 255, 123, 0.8) 0%, rgba(201, 230, 121, 0.38) 35%, transparent 76%);
+  filter: blur(18px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+
+#voice-art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+#voice-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: url('../assets/images/strings.png') center / 100% 100% no-repeat;
+  transform-origin: center;
+}
+
+#voice-art.idle::after {
+  animation: strings-pulse 2.8s ease-in-out infinite;
+}
+
+#voice-core {
+  position: absolute;
+  left: 47%;
+  top: 49%;
+  width: 30%;
+  height: 40%;
+  z-index: 3;
+  border: 0;
+  border-radius: 45%;
+  background: transparent;
+  pointer-events: none;
+}
+
+#voice-core::before {
+  content: '';
+  position: absolute;
+  inset: -35% -45%;
+  z-index: -1;
+  display: none;
+}
+
+#voice-core:focus-visible {
+  outline: none;
+}
+
+.voice-hotspot {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: clamp(58px, 7vw, 112px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.voice-hotspot span {
+  position: absolute;
+  left: 50%;
+  top: var(--label-y);
+  margin-left: var(--label-x);
+  width: max-content;
+  max-width: min(32vw, 280px);
+  white-space: normal;
+  transform: translate(-50%, 0);
+  color: #f2f2f2;
+  font: 0.85rem 'Lato Thin', 'Lato', sans-serif;
+  letter-spacing: 0.2em;
+  text-shadow:
+    0 0 8px rgba(255, 245, 225, 0.6),
+    0 0 22px rgba(255, 245, 225, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.voice-hotspot strong,
+.voice-hotspot small {
+  display: block;
+}
+
+.voice-hotspot strong {
+  font-size: clamp(0.95rem, 1.8vw, 1.35rem);
+  letter-spacing: 0.2em;
+}
+
+.voice-hotspot small {
+  margin-top: 0.25em;
+  font: 1.05rem 'Lato Thin', 'Lato', sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: none;
+}
+
+.voice-hotspot:hover span,
+.voice-hotspot:focus-visible span {
+  opacity: 0.9;
+  transform: translate(-50%, 0);
+}
+
+#voice-art.interacted::after {
+  animation: none;
+}
+
+
+
+.voice-hotspot:focus-visible {
+  outline: none;
+}
+
+.voice-glow.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(-22deg) scale(1.2);
+}
+
+.voice-glow.idle {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(-22deg) scale(1.05);
+}
+
+body.static-chapter::before {
+  content: '';
+  background: url('../assets/images/background.png') center / cover no-repeat;
+}
+
+@keyframes voices-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes strings-pulse {
+  0%, 100% {
+    opacity: 0.86;
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(230, 255, 150, 0));
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.018);
+    filter: drop-shadow(0 0 10px rgba(230, 255, 150, 0.3));
+  }
+}
+
+@media (max-width: 600px) {
+  #voice-art {
+    width: min(92vw, 72vh);
+  }
+
+  .voice-hotspot {
+    width: clamp(68px, 16vw, 92px);
+  }
+
+  .voice-hotspot span {
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    max-width: min(58vw, 240px);
+  }
+
+  .voice-hotspot strong {
+    font-size: 0.85rem;
+  }
+
+  .voice-hotspot small {
+    font-size: 0.82rem;
+  }
+}

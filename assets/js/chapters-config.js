@@ -15,5 +15,5 @@ const MENU_TILES = [
   { image: 'ch3.png', label: 'Fauna' },
   { image: 'ch4.png', label: 'Orology' },
   { image: 'ch5.png', label: 'Dataviz' },
-  { image: 'ch6.png', label: 'Interviews' }
+  { image: 'ch6.png', label: 'Voices' }
 ];

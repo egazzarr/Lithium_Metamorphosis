@@ -3,12 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Lithium Metamorphosis — Interviews</title>
+  <title>Lithium Metamorphosis — Voices</title>
   <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="interviews.css">
 </head>
 <body class="static-chapter">
+  <main id="voice-art" aria-label="Voices">
+    <button id="voice-core" type="button" aria-label="Reveal all voices"></button>
+    <span id="voice-core-glow" aria-hidden="true"></span>
+    <span class="voice-glow" data-voice="landscape" style="--x: 18%; --y: 12%;"></span>
+    <span class="voice-glow" data-voice="living" style="--x: 83%; --y: 23%;"></span>
+    <span class="voice-glow" data-voice="community" style="--x: 24%; --y: 43%;"></span>
+    <span class="voice-glow" data-voice="mine" style="--x: 14%; --y: 72%;"></span>
+    <span class="voice-glow" data-voice="industry" style="--x: 60%; --y: 76%;"></span>
+    <span class="voice-glow" data-voice="future" style="--x: 79%; --y: 72%;"></span>
+    <button class="voice-hotspot" data-voice="landscape" style="--x: 18%; --y: 12%; --label-x: -8%; --label-y: -72%;" type="button">
+      <span><strong>RESORSA</strong><small>mining perspective (SQM)</small></span>
+    </button>
+    <button class="voice-hotspot" data-voice="living" style="--x: 83%; --y: 23%; --label-x: 8%; --label-y: -72%;" type="button">
+      <span><strong>SALUD</strong><small>historian (Colla community)</small></span>
+    </button>
+    <button class="voice-hotspot" data-voice="community" style="--x: 24%; --y: 43%; --label-x: -8%; --label-y: 135%;" type="button">
+      <span><strong>FRAGMENTACION</strong><small>anthropologist</small></span>
+    </button>
+    <button class="voice-hotspot" data-voice="mine" style="--x: 14%; --y: 72%; --label-x: -8%; --label-y: 135%;" type="button">
+      <span><strong>AGUA</strong><small>microbiologist, indigenous community</small></span>
+    </button>
+    <button class="voice-hotspot" data-voice="industry" style="--x: 60%; --y: 76%; --label-x: 8%; --label-y: 135%;" type="button">
+      <span><strong>EMANCIPATION</strong><small>public servant</small></span>
+    </button>
+    <button class="voice-hotspot" data-voice="future" style="--x: 79%; --y: 72%; --label-x: 8%; --label-y: 135%;" type="button">
+      <span><strong>ECOLOGIA</strong><small>green energy, local ecosystems</small></span>
+    </button>
+  </main>
 
   <script src="../assets/js/chapters-config.js"></script>
   <script src="../assets/js/global.js"></script>
+  <script src="interviews.js"></script>
 </body>
 </html>

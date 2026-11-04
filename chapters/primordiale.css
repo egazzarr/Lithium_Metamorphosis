@@ -52,7 +52,7 @@ body {
     /* darkness that thins out with depth */
     linear-gradient(rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45 - var(--warm) * 0.2)),
                     rgba(8, 7, 6, calc(0.65 - var(--depth) * 0.45 - var(--warm) * 0.2))),
-    url('../assets/images/background.jpeg') center / cover no-repeat;
+    url('../assets/images/background.png') center / cover no-repeat;
 }
 
 /* the photo itself, without any light or darkness, under #backdrop */
@@ -142,8 +142,65 @@ body:not(.seamless) {
 }
 
 @keyframes title-glow {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 240, 215, 0.35)); }
-  50% { filter: drop-shadow(0 0 22px rgba(255, 240, 215, 0.8)); }
+  0%, 100% { filter: drop-shadow(0 0 9px rgba(255, 240, 215, 0.45)); }
+  50% { filter: drop-shadow(0 0 28px rgba(255, 240, 215, 0.95)); }
+}
+
+#surface-cta {
+  position: fixed;
+  left: 50%;
+  top: max(28px, 6vh);
+  bottom: auto;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.65em 1em;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: 250 0.8rem 'Lato', sans-serif;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 12px);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.65);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+#surface-cta span:first-child {
+  font-size: 2rem;
+  line-height: 0.6;
+  animation: surface-arrow-glow 2.4s ease-in-out infinite;
+}
+
+#surface-cta.visible {
+  opacity: 0.9;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+#surface-cta:hover,
+#surface-cta:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+#surface-cta:hover span:first-child,
+#surface-cta:focus-visible span:first-child {
+  animation: surface-arrow-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes surface-arrow-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.45)); }
+  50% { filter: drop-shadow(0 0 13px rgba(255, 255, 255, 0.95)); }
+}
+
+@keyframes surface-arrow-pulse {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.12); }
 }
 
 /* Small thin inner-voice lines at the top of the screen */

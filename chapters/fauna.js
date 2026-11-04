@@ -32,8 +32,8 @@ const NEAR_POWDER = 0.16;        // share of their height that dissolves at the 
 // The hands with the lithium, low in the middle, their bottom cut off by the
 // bottom of the screen: they come out only once the near mountains have
 // almost gone
-const HANDS_WIDTH = [0.72, 1.05]; // screen heights, at most this many screen widths
-const HANDS_CUT = 0.22;          // share of their height below the screen
+const HANDS_WIDTH = [0.84, 1.18]; // screen heights, at most this many screen widths
+const HANDS_CUT = 0.08;          // share of their height below the screen
 
 // Flamingos: three flocks in the whole chapter
 const FLOCK_FILE = '../assets/images/flamingo_side.gif';
@@ -194,7 +194,7 @@ function finale() {
 // ----- pointer: the lithium, once m6 has moved away from it -----
 
 function onLitio(x, y) {
-  if (slide < 0.8) return false;   // only once the hands have come out
+  if (slide < 0.45) return false;   // once the lithium is close enough to be reached
   const r = litio.getBoundingClientRect();
   // the stone's visible shape fills roughly the middle of its picture
   const cx = r.left + r.width * 0.46, cy = r.top + r.height * 0.5;
@@ -217,7 +217,19 @@ function trackPointer() {
 resize();
 window.addEventListener('resize', resize);
 
-if (!embedded) {
+function waitForFrame() {
+  return Promise.all([
+    ...nearLoaded,
+    new Promise((done) => {
+      const far = document.getElementById('m1');
+      if (far.complete && far.naturalWidth) { done(); return; }
+      far.addEventListener('load', done, { once: true });
+      far.addEventListener('error', done, { once: true });
+    }),
+  ]);
+}
+
+function startScene() {
   trackPointer();
   let start = null;
   const frame = (now) => {
@@ -230,4 +242,11 @@ if (!embedded) {
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
+}
+
+if (!embedded) {
+  waitForFrame().then(() => {
+    document.body.classList.add('ready');
+    startScene();
+  });
 }
