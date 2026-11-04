@@ -6,8 +6,8 @@
 /* The relief photo fills the screen; the map loops in the middle and turns to
    its negative while the pointer is over it. */
 body {
-  --bg: #2a1a4a;
-  background: var(--bg) url('../assets/images/oro_si.PNG') center / cover no-repeat;
+  --bg: #222222;
+  background: var(--bg) url('../assets/images/background.png') center / cover no-repeat;
 }
 
 /* Opened from the menu or the buttons, the page fades in. Arriving from the
